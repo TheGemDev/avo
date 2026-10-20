@@ -80,8 +80,6 @@ Security › Open Anyway). Install it over 0.1.0; your Android data stays.
 
 - Giving Android one of the Mac's cameras, or no camera, takes effect when
   Android restarts.
-- With the Mac's cameras, apps that check for a camera before using one find
-  it only when Google apps are installed.
 - Bluetooth headsets and other classic Bluetooth devices, Bluetooth pairing
   with the Mac's devices, and calls or SMS on the SIM don't work yet.
 - Some games rate the VM as a low-end device. Delta Force, for example, draws
