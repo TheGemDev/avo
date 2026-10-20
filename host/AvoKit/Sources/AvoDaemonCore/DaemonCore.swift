@@ -50,12 +50,14 @@ public actor DaemonCore {
         public var volumes: (any VolumeWatching)?
         /// The `AvoCuttlefishImages` developer setting (an image folder).
         public var imageOverride: String?
+        /// Translate Screen's engine, one for every app (ScreenTextEngine.swift; none in tests).
+        public var screenText: ScreenTextEngine?
 
         public init(paths: AvoPaths, engine: any VMEngine, adbKey: ADBKey, profiles: DeviceProfileCatalog, host: HostInfo,
                     shortcuts: ShortcutManager, notifications: any NotificationPresenter = NoNotifications(),
                     clipboard: any ClipboardBridge = NoClipboard(), launcher: any AppLauncher = NoLauncher(),
                     softwareVersion: String, bootTimeout: Duration = .seconds(180), volumes: (any VolumeWatching)? = nil,
-                    imageOverride: String? = nil,
+                    imageOverride: String? = nil, screenText: ScreenTextEngine? = nil,
                     loadImage: @escaping @Sendable () throws -> AndroidImage) {
             self.paths = paths
             self.engine = engine
@@ -70,6 +72,7 @@ public actor DaemonCore {
             self.bootTimeout = bootTimeout
             self.volumes = volumes
             self.imageOverride = imageOverride
+            self.screenText = screenText
             self.loadImage = loadImage
         }
     }
@@ -236,6 +239,7 @@ public actor DaemonCore {
             Task { await self?.openNotification(package: package, key: key) }
         }
         shareClipboard(config.shareClipboard)
+        if config.translationAtStartup { deps.screenText?.wake() }
         let adb = self.adb
         let config = self.config
         Task { await adb.update(enabled: config.adbEnabled, port: config.adbPort) }
@@ -719,6 +723,8 @@ public actor DaemonCore {
         // camera it has shows its new source; other camera changes wait for
         // the next start).
         if new.shareClipboard != old.shareClipboard { shareClipboard(new.shareClipboard) }
+        // Settings › General › Translate Screen: turned on, the engine gets ready now.
+        if new.translationAtStartup, !old.translationAtStartup { deps.screenText?.wake() }
         if new.wifiEnabled != old.wifiEnabled || new.networkSpeed != old.networkSpeed || new.shareMacBluetooth != old.shareMacBluetooth
             || new.cellularCommand != old.cellularCommand || new.cameraSources != old.cameraSources
             || new.microphoneEnabled != old.microphoneEnabled,
@@ -1761,6 +1767,35 @@ extension DaemonCore {
             throw AvoError.screenLockRejected(throttled: false)
         }
         try await engine.unlockScreen(checked)
+    }
+}
+
+// MARK: - Translate Screen (App Shims; ScreenTextEngine.swift)
+
+extension DaemonCore {
+    /// Translate Screen turned on in an app's window: the engine gets ready
+    /// (unless it is already, from the daemon's start or another app).
+    public func wakeScreenText(client: ClientID) throws {
+        try screenText(for: client).wakeForWindow()
+    }
+
+    public func readScreenText(_ request: ScreenTextRequest, pixels: Data, client: ClientID) async throws -> ScreenTextReading {
+        try await screenText(for: client).read(request, pixels: pixels)
+    }
+
+    public func translateTexts(_ request: TranslationRequest, client: ClientID) async throws -> [String] {
+        try await screenText(for: client).translate(request)
+    }
+
+    public func knownTranslations(_ request: TranslationRequest, client: ClientID) async throws -> [String?] {
+        await (try screenText(for: client)).known(request)
+    }
+
+    /// The engine, for App Shims only.
+    private func screenText(for client: ClientID) throws -> ScreenTextEngine {
+        guard case .shim? = role(of: client) else { throw AvoError.unauthorizedCaller }
+        guard let engine = dependencies.screenText else { throw AvoError.internalError("Translate Screen is not available.") }
+        return engine
     }
 }
 

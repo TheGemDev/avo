@@ -194,16 +194,40 @@ filter, performance HUD, Use Default Graphics Settings, full screen), then
 Keep on Top and Picture in Picture.
 `GraphicsMenu` is that menu's delegate; a menu edit saves a sparse
 per-app override through `setAppGraphics`. Translate Screen reads the frame
-on screen with Vision, translates it on the Mac with Apple's Translation
-framework and draws plates over the text in a view above `DisplayView`:
-clicks pass through, and nothing is drawn into frames, so screenshots and
-recordings stay clean. It follows the screen: ten times a second it compares
-the frame on screen with the one the plates were read from (`ScreenWatch`,
-a 16-pixel grid of gray cells), drops at once every plate over something
-that changed, and reads the screen again once it holds still; text and
-screens read before are not read or translated again. Vision builds its
-text models once per app bundle (most of a minute), so the shims share one
-model cache in `~/Library/Caches/dev.avo.WindowHost`.
+on screen and translates it on the Mac, and draws plates over the text in a
+view above `DisplayView`: clicks pass through, and nothing is drawn into
+frames, so screenshots and recordings stay clean. It follows the screen: ten
+times a second it compares the frame on screen with the one the plates were
+read from (`ScreenWatch`, a 16-pixel grid of gray cells), drops at once
+every plate over something that changed, and reads the screen again once it
+holds still; text and screens read before are not read or translated again.
+Through a scroll the plates move with their text instead (`ScreenFollow`):
+each look measures how far a strip of the frame (rows of about 4 pixels)
+slid since the last one, the way the mouse wheel's scroll watch does, and a
+plate shows at its new place only where the strip there shows what was
+under it.
+
+The reading and the translating are one engine's for every app, the
+daemon's (`ScreenTextEngine`). The shim sends the frame it shows
+(`readScreenText`, its pixels beside the request) and gets the text back in
+blocks with their colors and languages (Vision, `ScreenTextLayout`), then
+sends the text without a translation yet (`translateTexts`, Apple's
+Translation framework, which macOS 26 runs without a window for languages
+on the Mac). macOS translates about five texts a second however they are
+sent, so the engine keeps every app's translations while the daemon runs (in
+memory only: they are the screen's text), and a window asks for the known
+ones of a new screen at once (`knownTranslations`) before anything new is
+translated. Vision builds its text models for each program that reads text
+(about 25 s, again after a macOS or Avo update) and loads them in a moment
+at that program's next start; a model another program built is built again
+over it, so App Shims, each a program of its own, could not share them. The
+daemon builds and loads them once: at its start (Settings › General ›
+Translate Screen, `translationAtStartup`, on by default) or when Translate
+Screen first turns on in any app (`wakeScreenText`, which also loads the
+language pair translated last: macOS lets go of a pair's model a minute
+after its last use). A pair macOS must download first, and every pair on
+macOS 15, is translated in the window instead, by a SwiftUI translation
+session, which can show the system's download sheet.
 
 Keep on Top floats every window of the app over other apps' windows
 (`window.level = .floating`; not in full screen), remembered per app in the

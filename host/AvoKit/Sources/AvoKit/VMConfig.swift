@@ -135,6 +135,9 @@ public struct VMConfig: Codable, Equatable, Sendable {
     public var bluetoothEnabled: Bool
     /// Text copied on the Mac reaches Android and the other way round.
     public var shareClipboard: Bool
+    /// Translate Screen's engine (one for every app, in the daemon) gets
+    /// ready as the daemon starts; off, when an app first translates.
+    public var translationAtStartup: Bool
 
     // Shortcuts (spec §4)
     public var createDesktopAlias: Bool
@@ -153,6 +156,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
                 backCamera: CameraSource = .emulated, frontCamera: CameraSource = .emulated,
                 camerasEnabled: Bool = true, microphoneEnabled: Bool = true, bluetoothEnabled: Bool = true,
                 shareClipboard: Bool = true,
+                translationAtStartup: Bool = true,
                 createDesktopAlias: Bool = true, addToDock: Bool = false) {
         self.memoryMiB = memoryMiB
         self.cpuCount = cpuCount
@@ -189,6 +193,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
         self.microphoneEnabled = microphoneEnabled
         self.bluetoothEnabled = bluetoothEnabled
         self.shareClipboard = shareClipboard
+        self.translationAtStartup = translationAtStartup
         self.createDesktopAlias = createDesktopAlias
         self.addToDock = addToDock
     }
@@ -274,6 +279,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
         case defaultWindowSize, rooted, deviceProfileID, emulateHardware, gms, adbEnabled, adbPort, shareLocation
         case wifiEnabled, networkSpeed, shareMacBluetooth, cellularEnabled, mobileNetworkType, cellularSignal
         case backCamera, frontCamera, camerasEnabled, microphoneEnabled, bluetoothEnabled, shareClipboard
+        case translationAtStartup
         case createDesktopAlias, addToDock
     }
 
@@ -348,6 +354,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
         microphoneEnabled = try value(.microphoneEnabled, defaults.microphoneEnabled)
         bluetoothEnabled = try value(.bluetoothEnabled, defaults.bluetoothEnabled)
         shareClipboard = try value(.shareClipboard, defaults.shareClipboard)
+        translationAtStartup = try value(.translationAtStartup, defaults.translationAtStartup)
         createDesktopAlias = try value(.createDesktopAlias, defaults.createDesktopAlias)
         addToDock = try value(.addToDock, defaults.addToDock)
     }
@@ -537,6 +544,7 @@ extension VMConfig {
         check(\.bluetoothEnabled, "bluetoothEnabled", .restartRequired)
         check(\.microphoneEnabled, "microphoneEnabled", .immediate)
         check(\.shareClipboard, "shareClipboard", .immediate)
+        check(\.translationAtStartup, "translationAtStartup", .immediate)
         // Shortcuts.
         check(\.createDesktopAlias, "createDesktopAlias", .immediate)
         check(\.addToDock, "addToDock", .immediate)

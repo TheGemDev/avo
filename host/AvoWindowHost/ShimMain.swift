@@ -64,8 +64,6 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         buildMenu()
-        // Translate Screen's text recognition, ready before it is asked for (off the main thread, low priority).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { ScreenTextReader.warmUp() }
         let version = Bundle(for: ShimAppDelegate.self).object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
         let client = DaemonClient(role: .shim(package: package), version: "avo-shim \(version)", frameReceiver: frames)
         self.client = client

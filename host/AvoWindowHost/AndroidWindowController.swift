@@ -73,7 +73,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// (ScreenTranslation.swift). Esc is the game's while the key mapping has the keys.
     lazy var translation = ScreenTranslationController(displayView: displayView, button: translateButton,
                                                        notice: { [weak self] text in self?.notice.show(text) },
-                                                       keysBelongToGame: { [weak self] in self?.keymapTakesClicks == true })
+                                                       keysBelongToGame: { [weak self] in self?.keymapTakesClicks == true },
+                                                       engine: { [weak self] in self?.client })
     /// Keeps a ProMotion or adaptive screen at Android's rate above 60 Hz.
     private lazy var frameRateHint = FrameRateHint(view: displayView, renderer: displayView.renderer)
     /// The screen recording in progress.

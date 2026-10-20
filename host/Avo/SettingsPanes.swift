@@ -637,6 +637,16 @@ struct SystemPane: View {
                 }
             }
             .shown(sections.contains(.shortcuts))
+            Section("Translate Screen") {
+                // One engine in the daemon for every app (ScreenTextEngine).
+                Toggle(isOn: Binding(get: { config.translationAtStartup }, set: { value in model.update { $0.translationAtStartup = value } })) {
+                    HelpTitle("Start the translation engine with Avo") {
+                        Text("Translate Screen (⌘⇧T in an app window) reads the text on screen and translates it on this Mac. One engine does it for every app.")
+                        Text("On, the engine gets ready as Avo starts, so the first translation in any app shows at once. Off, it starts when an app first translates, and the apps after it use the same engine.")
+                    }
+                }
+            }
+            .shown(sections.contains(.translation))
             Section("Maintenance") {
                 Button("Reset Android…", role: .destructive) { confirmReset = true }
                     .disabled(model.isInstallingGoogleApps)
@@ -732,6 +742,7 @@ struct SystemSections: OptionSet {
     static let cameras = SystemSections(rawValue: 1 << 12)
     static let microphone = SystemSections(rawValue: 1 << 13)
     static let clipboard = SystemSections(rawValue: 1 << 14)
+    static let translation = SystemSections(rawValue: 1 << 15)
     static let all = SystemSections(rawValue: (1 << 16) - 1)
 }
 

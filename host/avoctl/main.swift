@@ -39,6 +39,7 @@ commands:
                          cellularEnabled, mobileNetworkType=gprs|edge|umts|hspa|lte|nr, cellularSignal=0…4,
                          bluetoothEnabled, camerasEnabled, backCamera and frontCamera = emulated|none|mac:<id>,
                          microphoneEnabled, shareLocation, shareClipboard.
+                         Translate Screen: translationAtStartup.
                          graphicsOverrides is ignored here: use app-graphics.
   app-graphics <package> [profile=apps|games|auto] [field=value ...]
                          Show or change one app's graphics (fields as in appGraphics;

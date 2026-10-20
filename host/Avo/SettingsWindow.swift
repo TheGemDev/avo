@@ -77,7 +77,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var keywords: [String] {
         switch self {
         case .general: [String(localized: "Shortcuts"), String(localized: "Dock"), String(localized: "Desktop alias"),
-                        String(localized: "Notifications"), String(localized: "Notification Center")]
+                        String(localized: "Notifications"), String(localized: "Notification Center"),
+                        String(localized: "Translate Screen"), String(localized: "Translation")]
         case .android: [String(localized: "Android version"), String(localized: "Reset Android")]
         case .googleApps: [String(localized: "Google Play"), "MindTheGapps", "GApps", String(localized: "Android ID")]
         // Display was a pane of its own: its settings are in Graphics now.
@@ -529,7 +530,7 @@ private struct SettingsDetail: View {
     var body: some View {
         Group {
             switch pane {
-            case .general: SystemPane(sections: [.shortcuts, .notifications])
+            case .general: SystemPane(sections: [.shortcuts, .translation, .notifications])
             case .android: SystemPane(sections: [.androidVersion, .maintenance])
             case .googleApps: SystemPane(sections: .googleApps)
             case .graphics: GraphicsPane()
