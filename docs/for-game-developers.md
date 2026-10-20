@@ -19,7 +19,7 @@ identity scheme is described here.
 | Marker | Value | When |
 | --- | --- | --- |
 | Property `ro.boot.avo.schema` | `1` | every boot, whichever device profile is chosen |
-| Property `ro.boot.avo.version` | Avo's version, e.g. `0.1.0` | every boot |
+| Property `ro.boot.avo.version` | Avo's version, e.g. `0.2.0` | every boot |
 | Property `ro.boot.avo.host.os` | `macOS 27.0.1` (name, major.minor.patch) | every boot |
 | Property `ro.boot.avo.host.chip` | the Mac's chip, e.g. `Apple M4 Pro` | every boot |
 | Property `ro.boot.avo.renderer` | `gpu` or `software` (what renders Android this boot) | every boot |
