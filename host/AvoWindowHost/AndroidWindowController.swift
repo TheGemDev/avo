@@ -61,6 +61,11 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let captureButton = TitlebarButton(symbol: "camera", label: String(localized: "Screenshot and Screen Recording", bundle: .windowHost),
                                                action: nil)
     private var titlebarActions: [TitlebarButton] { [backButton, gameModeButton, translateButton, captureButton] }
+    /// Keep on Top (also View › Keep on Top): a pin, filled while this app's
+    /// windows float over other apps'. Not one of `titlebarActions`: it works
+    /// without the display.
+    private let keepOnTopButton = TitlebarButton(symbol: "pin", label: String(localized: "Keep on Top", bundle: .windowHost),
+                                                 action: #selector(AndroidWindowController.toggleKeepOnTop))
     /// Touches Android's fingerprint sensor with a finger from Settings ›
     /// Fingerprints (FingerprintMenu.swift). Not one of `titlebarActions`: it
     /// works without the display, also on Android's lock screen.
@@ -95,13 +100,15 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     /// Back, then three icons that open menus of related actions (the same
     /// as the menu bar's): game controls, translation and capture; then the
-    /// fingerprint, whose menu has no menu bar counterpart, and last Quick Settings.
+    /// fingerprint, whose menu has no menu bar counterpart, Keep on Top, and
+    /// last Quick Settings.
     private lazy var titlebarButtons: NSTitlebarAccessoryViewController = {
         backButton.target = self
+        keepOnTopButton.target = self
         gameModeButton.popUpMenu = { [weak self] in self?.gameControlsMenu() }
         translateButton.popUpMenu = { [weak self] in self?.translationMenu() }
         captureButton.popUpMenu = { [weak self] in self?.captureMenu() }
-        let stack = NSStackView(views: titlebarActions + [fingerprintMenu.button, quickSettings.button])
+        let stack = NSStackView(views: titlebarActions + [fingerprintMenu.button, keepOnTopButton, quickSettings.button])
         stack.orientation = .horizontal
         stack.spacing = 2
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -973,10 +980,15 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     /// Floats over other apps' windows while Keep on Top is on; full screen
-    /// has its own Space.
+    /// has its own Space. The pin shows the setting either way.
     func applyWindowLevel() {
+        let on = Self.windowModes.keepOnTop
+        keepOnTopButton.state = on ? .on : .off
+        keepOnTopButton.contentTintColor = on ? .controlAccentColor : nil
+        keepOnTopButton.image = NSImage(systemSymbolName: on ? "pin.fill" : "pin", accessibilityDescription: keepOnTopButton.toolTip)?
+            .withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
         guard let window else { return }
-        let floats = Self.windowModes.keepOnTop && !fullScreenTransition && !window.styleMask.contains(.fullScreen)
+        let floats = on && !fullScreenTransition && !window.styleMask.contains(.fullScreen)
         window.level = floats ? .floating : .normal
     }
 

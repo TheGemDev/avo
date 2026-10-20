@@ -40,6 +40,12 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
     private var pendingNotificationKey: String?
     private let frames = FrameRouter()
     private var client: DaemonClient?
+    /// The daemon answered `hello`: a window may open its display. Until
+    /// then the launch's window is on its way, and a reopen (a Dock click, or
+    /// a second request to open the app while it starts) must not open
+    /// another: its display would be asked for before the daemon knows the
+    /// shim, and refused ("The caller is not allowed…").
+    private var connected = false
     private(set) var config = VMConfig()
     /// The device profiles (they never change while the daemon runs): the
     /// chosen one's screen is what "Phone's screen" gives Android.
@@ -76,6 +82,7 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
                 }
                 ShimFingerprints.shared.connect(client)
                 LocationModel.shared.connect(client)
+                connected = true
                 openWindow(notificationKey: pendingNotificationKey)
                 pendingNotificationKey = nil
                 for await event in client.events { handle(event) }
@@ -275,7 +282,7 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
             for window in pictures { window.togglePictureInPicture() }
             return true
         }
-        if !flag { openWindow(notificationKey: nil) }
+        if !flag, connected { openWindow(notificationKey: nil) }
         return true
     }
 
@@ -417,6 +424,7 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
     }
 
     @objc private func newWindow() {
+        guard connected else { return }
         openWindow(notificationKey: nil)
     }
 
