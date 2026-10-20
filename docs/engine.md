@@ -428,9 +428,15 @@ daemon plays it over ADB (vsock 6520, root through `su` on userdebug):
   rate this boot (above); a task already on
   Android's own screen moves there (`am display move-stack`), else the app
   starts there like a launcher would;
-- resizing re-plugs the display at the new size (Android's composer ignores
-  mode changes of a connected display; Android 17 moves the tasks back).
-  A scanout is plugged again, by a re-plug or a new window, only once
+- resizing gives the plugged scanout its new size when Avo's composer runs
+  (`GuestComposer`: a patched copy of the image's RanchuHwc that reports a
+  connected display's new mode, so SurfaceFlinger reconnects it and the
+  Android display keeps its id; installed on the `remount` overlays and
+  bind-mounted by an init file from the next boot). Otherwise it re-plugs
+  the display at the new size (the image's composer ignores mode changes
+  of a connected display; Android 17 moves the tasks back, under a new
+  display id, which breaks apps that keep per-display objects: Flutter's
+  text fields stop taking keys). A scanout is plugged again, by a re-plug or a new window, only once
   SurfaceFlinger and DisplayManager have dropped its old display, not when
   its EDID went: SurfaceFlinger crashed on a plug in between
   (architecture.md, "Resolution and scaling");

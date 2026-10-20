@@ -84,6 +84,9 @@ actor HostAgent: DisplayResizing {
     /// waiting for that to end (`DisplayResizing`).
     var resizing: Set<UInt32> = []
     var resizeWaiters: [UInt32: [CheckedContinuation<Void, Never>]] = [:]
+    /// Avo's composer runs (GuestComposer): a display takes a new size in
+    /// place, keeping its Android display id, instead of a re-plug.
+    private var resizesInPlace = false
     /// When each display's app was started, and how many checks in a row
     /// found nothing on it (see `watchTasks`).
     private var startedAt: [UInt32: ContinuousClock.Instant] = [:]
@@ -315,6 +318,8 @@ actor HostAgent: DisplayResizing {
         await shareAudioFocus()
         // Before any app draws: Vulkan apps must not deadlock gfxstream (GuestGfxstreamSync).
         await enableGfxstreamSync()
+        // Before any window resizes: in place, or by re-plugs (GuestComposer).
+        await checkComposer()
     }
 
     /// GPU mode: installs Avo's gfxstream sync layer and names it for the
@@ -730,11 +735,13 @@ actor HostAgent: DisplayResizing {
                 DisplayMode(width: display.appliedWidth, height: display.appliedHeight, dpi: display.appliedDPI))
     }
 
-    /// Android's composer ignores new modes of a connected display, so the
-    /// display is unplugged and plugged in again at the new size: Android
-    /// moves the display's tasks to display 0 and back when it returns, and
-    /// the app lays out for the new size.
+    /// Avo's composer (GuestComposer) gives the display its new size in
+    /// place. The image's composer ignores new modes of a connected display,
+    /// so the display is unplugged and plugged in again at the new size:
+    /// Android moves the display's tasks to display 0 and back when it
+    /// returns (under a new display id), and the app lays out for the new size.
     func replug(_ id: UInt32, to mode: DisplayMode) async throws {
+        if resizesInPlace, try await resize(id, inPlaceTo: mode) { return }
         guard let display = displays[id] else { return }
         try await engine.send("display \(display.scanout) off")
         // Plugged back before Android let go of it, the display would keep
@@ -753,6 +760,42 @@ actor HostAgent: DisplayResizing {
         displays[id] = current
         if current.dpi > 0 { _ = try? await shell("wm density \(current.dpi) -d \(androidID)") }
         try await bringBack(current, to: androidID)
+    }
+
+    /// The scanout takes the new mode while plugged: the composer reports it
+    /// and DisplayManager gives the same display its new size, with the app
+    /// on it. False when Android did not take it in time (then it re-plugs).
+    private func resize(_ id: UInt32, inPlaceTo mode: DisplayMode) async throws -> Bool {
+        guard let display = displays[id], let androidID = display.androidID else { return false }
+        try await engine.send("display \(display.scanout) \(mode.width) \(mode.height) \(displayRate)")
+        let deadline = ContinuousClock.now + .seconds(3)
+        while ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(30))
+            guard var current = displays[id] else { return true } // closed meanwhile
+            let size = Self.modeSize(androidID: androidID, in: try await shell("cmd display get-displays"))
+            guard let size, size.width == mode.width, size.height == mode.height else { continue }
+            current.appliedWidth = mode.width
+            current.appliedHeight = mode.height
+            // A density that changed meanwhile is the loop's next step.
+            displays[id] = current
+            return true
+        }
+        logger.error("display \(androidID) did not take \(mode.width)x\(mode.height) in place; re-plugging it")
+        return false
+    }
+
+    /// The size of display `androidID`'s mode in `cmd display get-displays`
+    /// (`… supportedModes [{id=38, …, width=432, height=892, …`), which does
+    /// not turn with the display as `real` does.
+    static func modeSize(androidID: Int, in output: String) -> (width: UInt32, height: UInt32)? {
+        guard let line = output.split(separator: "\n").first(where: { $0.hasPrefix("Display id \(androidID): ") }),
+              let modes = line.range(of: "supportedModes [{") else { return nil }
+        func value(_ name: String) -> UInt32? {
+            guard let start = line.range(of: name + "=", range: modes.upperBound..<line.endIndex) else { return nil }
+            return UInt32(line[start.upperBound...].prefix { $0.isNumber })
+        }
+        guard let width = value("width"), let height = value("height") else { return nil }
+        return (width, height)
     }
 
     func applyDensity(_ id: UInt32, _ dpi: UInt32) async {
@@ -2284,6 +2327,32 @@ extension HostAgent {
     /// AlarmManager sets the clock and tells apps (ACTION_TIME_CHANGED).
     static func setTimeCommand(milliseconds: Int64) -> String {
         "cmd alarm set-time \(milliseconds)"
+    }
+}
+
+// MARK: - Composer (GuestComposer: resizes keep the display)
+
+extension HostAgent {
+    /// Resizes go in place when Avo's composer runs. On the known build with
+    /// the overlays of a `remount`, it is put in place for the next boot;
+    /// until then, and everywhere else, resizes re-plug.
+    func checkComposer() async {
+        guard let sums = try? await shell("sha256sum " + GuestComposer.binary) else { return }
+        switch GuestComposer.state(sumOutput: sums) {
+        case .patched:
+            resizesInPlace = true
+            logger.notice("composer: Avo's; windows resize in place")
+        case .unknown:
+            logger.notice("composer: unknown build; windows re-plug to resize")
+        case .stock(let build):
+            if (try? await root(GuestComposer.pendingCheck(build)))?.succeeded == true {
+                logger.notice("composer: Avo's runs from the next Android start; windows re-plug to resize until then")
+            } else if (try? await root(GuestComposer.installScript(build)))?.succeeded == true {
+                logger.notice("composer: Avo's installed; it runs from the next Android start")
+            } else {
+                logger.notice("composer: not installed (no remount overlays?); windows re-plug to resize")
+            }
+        }
     }
 }
 

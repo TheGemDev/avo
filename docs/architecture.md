@@ -363,8 +363,10 @@ read (true is follow, false fixed, `mode` wins when both are there) but no
 longer written, and a ratio stored in `aspectRatio` still applies to fixed
 mode only.
 
-Changing Android's size re-plugs its display (HostAgent unplugs it, plugs
-it back at the new size and brings the app back), so it happens only when
+Changing Android's size gives its display the new size in place when Avo's
+composer runs (`GuestComposer`, docs/engine.md): the app keeps its display
+and only lays out again. Otherwise it re-plugs the display (HostAgent unplugs
+it, plugs it back at the new size and brings the app back). Either way it happens only when
 needed: in follow mode at the end of a resize and on a backing-scale change;
 with Match window when the window's shape changed by more than 1 %; with a
 fixed ratio or the phone's screen only on rotation and setting changes. Never during a live resize
@@ -382,16 +384,20 @@ SurfaceFlinger (a null pointer in `HWComposer::executeCommands`) and every
 app with it. For the same reason a closed window's scanout goes to a new
 window only once Android has let go of it (`releasing`); a window opened
 meanwhile takes another scanout.
-While Android re-plugs, the renderer holds a copy of the last frame
+While Android changes size, the renderer holds a copy of the last frame
 (`holdCurrentFrame`) until the first frame of the new size after the
-daemon's reply, at most 4 s, so the window never flashes black. Shims hear
+daemon's reply (or at the reply, when that frame came first), at most 4 s,
+so the window never flashes black; the held frame then fades out over the
+new one in 0.2 s. Shims hear
 `configurationChanged`, and an app's own override changes only through
 `setAppGraphics`.
 
 The picture is placed by `presentationRect`: 1:1 when the window is at most
 a few pixels larger (the edge pixels repeat into the gap), filling the
-window when the shapes differ by 2 % or less, aspect-fitted with black bars
-otherwise. The renderer (`MetalRenderer`) then picks a path with
+window when the shapes differ by 2 % or less, aspect-fitted otherwise, over
+a backdrop instead of black bars: the frame shrunk to 48 pixels, blurred
+there, dimmed and stretched over the window (`avo_backdrop`; recordings keep
+black bars). The renderer (`MetalRenderer`) then picks a path with
 `scalingPath`:
 
 - **1:1:** a copy shader.
