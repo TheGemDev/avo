@@ -126,9 +126,6 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         menu.addItem(withTitle: String(localized: "Game Mode", bundle: .windowHost), action: #selector(toggleGameMode), keyEquivalent: "g")
         menu.addItem(withTitle: String(localized: "Edit Key Mapping…", bundle: .windowHost), action: #selector(toggleKeymapEditor), keyEquivalent: "k")
             .keyEquivalentModifierMask = [.command, .shift]
-        // The same editor, with its controller panel out (ControllerPanel.swift).
-        menu.addItem(withTitle: String(localized: "Edit Controller Mapping…", bundle: .windowHost), action: #selector(editControllerMapping),
-                     keyEquivalent: "")
         menu.addItem(withTitle: String(localized: "Show Key Mapping on Game", bundle: .windowHost), action: #selector(toggleKeymapHints),
                      keyEquivalent: "")
         for item in menu.items { item.target = self }
@@ -767,10 +764,6 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         keymap?.toggleEditor(over: window)
     }
 
-    @objc func editControllerMapping() {
-        keymap?.toggleEditor(over: window, showingController: true)
-    }
-
     @objc func toggleGameMode() {
         guard let keymap else { return }
         keymap.setGameMode(!keymap.gameMode)
@@ -956,7 +949,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
             return picture != nil || !lockOverlay.isShowing
         }
         // The editor is drawn over the window, which Picture in Picture hides.
-        if item.action == #selector(toggleKeymapEditor) || item.action == #selector(editControllerMapping) { return picture == nil }
+        if item.action == #selector(toggleKeymapEditor) { return picture == nil }
         if item.action == #selector(toggleKeymapHints) {
             item.state = KeymapHints.visible ? .on : .off
             return keymap != nil

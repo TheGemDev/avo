@@ -378,8 +378,6 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
         let editor = gameMenu.addItem(withTitle: String(localized: "Edit Key Mapping…", bundle: .windowHost), action: #selector(AndroidWindowController.toggleKeymapEditor),
                                       keyEquivalent: "k")
         editor.keyEquivalentModifierMask = [.command, .shift]
-        gameMenu.addItem(withTitle: String(localized: "Edit Controller Mapping…", bundle: .windowHost),
-                         action: #selector(AndroidWindowController.editControllerMapping), keyEquivalent: "")
         gameMenu.addItem(withTitle: String(localized: "Game Mode", bundle: .windowHost), action: #selector(AndroidWindowController.toggleGameMode),
                          keyEquivalent: "g")
         gameMenu.addItem(withTitle: String(localized: "Show Key Mapping on Game", bundle: .windowHost), action: #selector(toggleKeymapHints(_:)),
