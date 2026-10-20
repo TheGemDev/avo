@@ -185,7 +185,8 @@ public actor DaemonCore {
         fingerprints = FingerprintCenter(paths: deps.paths, engine: deps.engine)
         usage = AppUsageRecorder(url: deps.paths.usage)
         adb = ADBForwarder { try await vm.adbSocket() }
-        location = LocationCenter(engine: deps.engine as? any LocationEngine, wake: { try? await vm.wake() })
+        location = LocationCenter(engine: deps.engine as? any LocationEngine, wake: { try? await vm.wake() },
+                                  store: deps.paths.config.deletingLastPathComponent().appending(path: "location.json"))
     }
 
     /// Starts the event pumps. Call once after init.
@@ -1422,6 +1423,7 @@ public actor DaemonCore {
             stop.package = display.package
             _ = try? await vm.controlSession().request(.forceStop(stop))
             runningPackages.remove(display.package)
+            await location.appClosed(display.package)
         }
         var request = Avo_V1_Close()
         request.displayID = id
@@ -1444,7 +1446,9 @@ public actor DaemonCore {
     /// The window became the Mac's key window (Avo_V1_FocusDisplay). The
     /// Bridge Agent's displays have their own focus and answer unsupported.
     public func focusDisplay(_ id: UInt32, client: ClientID) async {
-        guard ownedDisplay(id, by: client) != nil else { return }
+        guard let display = ownedDisplay(id, by: client) else { return }
+        // An app's own location goes with its window (LocationCenter).
+        await location.appFocused(display.package)
         var request = Avo_V1_FocusDisplay()
         request.displayID = id
         _ = try? await vm.controlSession().request(.focusDisplay(request))
@@ -1546,6 +1550,7 @@ public actor DaemonCore {
             await vm.setOpenDisplays(displays.count)
             // The app ended: it is no longer running at all.
             runningPackages.remove(closed.package.isEmpty ? display.package : closed.package)
+            if !displays.values.contains(where: { $0.package == display.package }) { await location.appClosed(display.package) }
             publishActivity()
         case .displayContentChanged(let changed):
             guard let display = displays[changed.displayID] else { return }

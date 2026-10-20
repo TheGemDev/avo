@@ -912,8 +912,21 @@ daemon's `LocationCenter` (AvoDaemonCore), which has one of three sources:
   resuming one wakes a paused Android.
 
 The center is the daemon's, so a route plays on with every window closed.
-It is not saved: a new daemon starts with this Mac again. avo-vmm keeps the
-last fix and sends it again after every start.
+avo-vmm keeps the last fix and sends it again after every start.
+
+**Every app's location and an app's own.** There is a location for every
+app, and an app may have one of its own: the panel's **All Apps / This App**
+(`LocationRequest.ownLocation`, `.followAllApps`; Settings › Devices ›
+Location lists the apps with their own and gives each back to every app's,
+`.removeApp`). An app's own starts where every app's is and changes on its
+own, a route included, each route moving on its own clock. Android has one
+GPS, so what it reports is the own location of the app whose window is in
+front (`focusDisplay` → `LocationCenter.appFocused`), else every app's; the
+app's last window closing gives Android every app's location again. Each
+panel hears its app's location (`location(watch:)` is answered per client),
+the Control Panel every app's with the list. Places, every app's and the
+apps' own, are kept across starts in `location.json` next to the
+configuration; a route is not (the place before it is kept).
 
 **The Location panel** (an app window's Controls › Location…, ⌥⌘L, or Quick
 Settings › Location; `LocationPanel.swift`) is one window per App Shim:

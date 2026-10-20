@@ -1,6 +1,7 @@
 import AppKit
 import AVFoundation
 import AvoKit
+import AvoWindowHost
 import SwiftUI
 
 // Control Panel tabs from spec §6. Changes apply immediately; the daemon
@@ -552,10 +553,34 @@ struct SystemPane: View {
                     HelpTitle("Share this Mac’s location with Android",
                               help: "Apps that ask for GPS get where this Mac is (as macOS knows it, usually from Wi-Fi). macOS asks for permission the first time.")
                 }
-                // An app window's Location panel (AvoWindowHost/LocationPanel.swift).
-                RestartNote(text: "To put Android somewhere else, or move it along a route, choose Controls › Location… in an app window (⌥⌘L).")
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        Text(verbatim: LocationNames.summary(source: model.location?.source, name: model.location?.pointName,
+                                                             point: model.location?.fix?.point))
+                            .foregroundStyle(Haze.textSecondary)
+                        Button("Choose…") { model.showLocationWindow() }
+                    }
+                } label: {
+                    HelpTitle("All apps",
+                              help: "Where Android is for every app: this Mac’s location, a place, or a route Android moves along. A place stays for the next start. Choose… shows it on a map.")
+                }
+                ForEach(model.location?.apps ?? [], id: \.package) { app in
+                    LabeledContent {
+                        HStack(spacing: 8) {
+                            Text(verbatim: LocationNames.summary(source: app.source, name: app.pointName, point: app.point))
+                                .foregroundStyle(Haze.textSecondary)
+                            Button("Use All Apps’ Location") { model.removeAppLocation(app.package) }
+                        }
+                    } label: {
+                        Text(verbatim: model.apps.first { $0.package == app.package }?.displayName ?? app.package)
+                    }
+                }
+                // The Location window (AvoWindowHost/LocationPanel.swift), here or in an app window.
+                RestartNote(text: "To give one app a location of its own, choose Controls › Location… in its window (⌥⌘L), then This App. Android reports it while that app’s window is in front.")
             }
             .shown(sections.contains(.location))
+            .onAppear { model.watchLocation(true) }
+            .onDisappear { model.watchLocation(false) }
             Section("Clipboard") {
                 Toggle(isOn: Binding(get: { config.shareClipboard }, set: { value in model.update { $0.shareClipboard = value } })) {
                     HelpTitle("Share the clipboard") {
@@ -798,5 +823,45 @@ struct CameraPicker: View {
         AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],
                                          mediaType: .video, position: .unspecified)
             .devices.map { ($0.uniqueID, $0.localizedName) }
+    }
+}
+
+/// A location as Settings names it.
+enum LocationNames {
+    static func summary(source: LocationStatus.Source?, name: String?, point: GeoPoint?) -> String {
+        switch source {
+        case .mac?, nil: return String(localized: "This Mac’s location")
+        case .route?: return name.map { String(localized: "Route: \($0)") } ?? String(localized: "A route")
+        case .point?:
+            if let name { return name }
+            guard let point else { return String(localized: "A chosen place") }
+            return String(format: "%.5f, %.5f", point.latitude, point.longitude)
+        }
+    }
+}
+
+extension ControlPanelModel {
+    /// Settings › Devices › Location or its Location window shows (every
+    /// change comes as `DaemonEvent.location` while one does) or not.
+    func watchLocation(_ on: Bool) {
+        locationWatchers = max(locationWatchers + (on ? 1 : -1), 0)
+        guard let client = daemonClient else { return }
+        let watching = locationWatchers > 0
+        Task { @MainActor in
+            if let status = try? await client.location(watch: watching), watching { location = status }
+        }
+    }
+
+    /// Settings › Devices › Location › Choose…: every app's location, on a map.
+    func showLocationWindow() {
+        ControlPanelLocationWindow.show()
+    }
+
+    /// The app uses every app's location again.
+    func removeAppLocation(_ package: String) {
+        guard let client = daemonClient else { return }
+        Task { @MainActor in
+            if let status = try? await client.changeLocation(.removeApp(package)) { location = status }
+        }
     }
 }
