@@ -118,6 +118,8 @@ public actor DaemonCore {
     /// Where the engine keeps what Android plays, for App Shims' screen recordings.
     private var audioTap: AudioTapLocation?
     private var lastClipboardFromGuest: String?
+    /// The Mac's clipboard is watched (Settings › Devices › Clipboard).
+    private var clipboardShared = false
     /// Android's notifications since the daemon started, newest first.
     private var recentNotifications: [AndroidNotification] = []
     /// In-process watchers of the VM status (the menu bar). `vm.statusUpdates`
@@ -135,6 +137,8 @@ public actor DaemonCore {
     /// running now, one at a time; its latest progress, and whether it can
     /// still stop (nothing in Android changed yet).
     private var googleAppsRun: Task<URL?, any Error>? { didSet { publishGoogleAppsBusy() } }
+    /// Root being prepared (Magisk; `rootIfAsked`).
+    private var rootRun: Task<Void, Never>?
     private var googleAppsRunID: UUID?
     private var googleAppsRecovering = false
     /// The run is a Remove (or finishes one), not an install.
@@ -230,9 +234,7 @@ public actor DaemonCore {
         deps.notifications.start { [weak self] package, key in
             Task { await self?.openNotification(package: package, key: key) }
         }
-        deps.clipboard.start { [weak self] text in
-            Task { await self?.hostClipboardChanged(text) }
-        }
+        shareClipboard(config.shareClipboard)
         let adb = self.adb
         let config = self.config
         Task { await adb.update(enabled: config.adbEnabled, port: config.adbPort) }
@@ -622,6 +624,7 @@ public actor DaemonCore {
             // Android keeps the cap in its settings: this start follows the
             // configuration, also one changed while Android was stopped.
             await applyFrameRateLimit(config.fpsLimit)
+            rootIfAsked()
             storageCheckedAt = nil
             _ = await dataDiskStatus()
         case .stopped, .failed, .notInstalled:
@@ -708,6 +711,18 @@ public actor DaemonCore {
         if new.fpsLimit != old.fpsLimit { await applyFrameRateLimit(new.fpsLimit) }
         if new.adbEnabled != old.adbEnabled || new.adbPort != old.adbPort {
             await adb.update(enabled: new.adbEnabled, port: new.adbPort)
+        }
+        // Root on: Android starts again with Magisk at once (off waits for the next start).
+        if new.rooted, !old.rooted { rootIfAsked() }
+        // Settings › Devices: the running Android follows at once (a
+        // camera it has shows its new source; other camera changes wait for
+        // the next start).
+        if new.shareClipboard != old.shareClipboard { shareClipboard(new.shareClipboard) }
+        if new.wifiEnabled != old.wifiEnabled || new.networkSpeed != old.networkSpeed || new.shareMacBluetooth != old.shareMacBluetooth
+            || new.cellularCommand != old.cellularCommand || new.cameraSources != old.cameraSources
+            || new.microphoneEnabled != old.microphoneEnabled,
+           let engine = deps.engine as? any DeviceSettingsEngine {
+            await engine.applyDeviceSettings(new)
         }
         if new.createDesktopAlias != old.createDesktopAlias || new.addToDock != old.addToDock {
             for app in await registry.all() {
@@ -1148,6 +1163,47 @@ public actor DaemonCore {
         }
     }
 
+    // MARK: Root (MagiskRoot)
+
+    /// With root on, a start without Magisk (root just turned on, or a new
+    /// Android version) gets Magisk: its init_boot is patched once per image
+    /// inside the running Android, then Android starts again with it. When
+    /// that fails, root turns off again and the Mac says why.
+    private func rootIfAsked() {
+        guard config.rooted, rootRun == nil, let engine = deps.engine as? any RootEngine else { return }
+        rootRun = Task { [weak self] in
+            await self?.prepareRoot(engine)
+        }
+    }
+
+    private func prepareRoot(_ engine: any RootEngine) async {
+        defer { rootRun = nil }
+        guard await vm.status.state == .running, config.rooted, await !engine.bootedRooted() else { return }
+        do {
+            if await !engine.hasPatchedImage() { try await engine.prepareRoot() }
+            // Turned off meanwhile: the patched copy waits for the next time.
+            guard config.rooted else { return }
+            logger.notice("root: starting Android again with Magisk")
+            await vm.stop()
+            bootedConfig = nil
+            try await bootVM()
+        } catch {
+            logger.error("root: \(String(describing: error), privacy: .public)")
+            guard config.rooted else { return }
+            var off = config
+            off.rooted = false
+            config = off
+            try? off.save(to: deps.paths.config)
+            publish(off)
+            var notification = Avo_V1_Notification()
+            notification.package = AvoIdentifiers.daemonBundleID
+            notification.key = "avo-root"
+            notification.title = String(localized: "Root could not be turned on", bundle: .avoKit)
+            notification.body = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            deps.notifications.post(notification, appName: "Avo", icon: nil)
+        }
+    }
+
     private func googleAppsInstaller(_ id: UUID, engine: any SystemAppsEngine,
                                      report: @escaping GoogleAppsInstaller.Report) -> GoogleAppsInstaller {
         var installer = GoogleAppsInstaller(
@@ -1399,7 +1455,7 @@ public actor DaemonCore {
         guard !owned.isEmpty else { return }
         // A paste uses what was just copied on the Mac, not what the clipboard
         // sync last saw.
-        if Self.isPaste(record), let text = deps.clipboard.takeChange() {
+        if clipboardShared, Self.isPaste(record), let text = deps.clipboard.takeChange() {
             await hostClipboardChanged(text)
         }
         do {
@@ -1515,7 +1571,7 @@ public actor DaemonCore {
             // Dismissed or withdrawn in Android: gone from the list as well.
             recentNotifications.removeAll { $0.key == removed.key }
             await publishNotifications()
-        case .clipboardChanged(let changed):
+        case .clipboardChanged(let changed) where clipboardShared:
             lastClipboardFromGuest = changed.text
             deps.clipboard.set(changed.text)
         default:
@@ -1623,8 +1679,23 @@ public actor DaemonCore {
         return event.action == .down && event.keyCode == 50 && event.metaState & 0x1000 != 0
     }
 
+    /// Settings › Devices › Clipboard: the Mac's clipboard is read and
+    /// written only while it is shared.
+    private func shareClipboard(_ on: Bool) {
+        guard on != clipboardShared else { return }
+        clipboardShared = on
+        if on {
+            deps.clipboard.start { [weak self] text in
+                Task { await self?.hostClipboardChanged(text) }
+            }
+        } else {
+            deps.clipboard.stop()
+        }
+    }
+
     func hostClipboardChanged(_ text: String) async {
         // Copying on the Mac does not wake a paused Android: it gets the text when it goes on.
+        guard clipboardShared else { return }
         if text != lastClipboardFromGuest, await vm.status.isPaused {
             autoPause.clipboard = text
             return

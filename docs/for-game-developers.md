@@ -227,8 +227,13 @@ A player on Avo is almost always using a keyboard and a mouse or trackpad.
   (Android's multi audio focus): when another app asks for focus, yours keeps
   it and gets no `AUDIOFOCUS_LOSS`. Calls and transient requests
   (notifications, ducking) work as on a phone.
-- Network: Wi-Fi ("VirtWifi") behind NAT on the Mac. No SIM, no telephony,
-  no Bluetooth, no camera yet. GPS reports the Mac's location when the user
+- Network: Wi-Fi ("VirtWifi") behind NAT on the Mac; a test SIM with mobile
+  data when the user turns it on, no telephony. The back and front cameras
+  are emulated or one of the Mac's cameras (the external camera HAL:
+  hardware level EXTERNAL, Motion-JPEG up to 1080p at 30 fps, no flash or
+  zoom). Bluetooth turns on when the Android Emulator is installed
+  (a virtual controller) and reaches the Bluetooth LE devices the Mac sees
+  (GATT through the Mac; no classic Bluetooth, no pairing yet). GPS reports the Mac's location when the user
   allows it.
 
 ## What we ask of publishers
@@ -250,13 +255,15 @@ A player on Avo is almost always using a keyboard and a mouse or trackpad.
 
 - **Avo does not hide.** The markers are on every boot, also when a user
   impersonates a phone for compatibility.
-- **No root for apps.** Android is an AOSP userdebug build: `su` exists but
-  only Android's shell and root users may run it, which apps never are.
-  Avo's own daemon uses that shell over ADB to set Android up (displays,
-  input routing, clipboard, notifications, installing Google apps). Only the
-  daemon reaches ADB, unless the user turns on ADB support, which lets
-  developer tools on that Mac connect too. The image Avo boots today has no
-  KernelSU, so Settings has no root switch.
+- **No root for apps, unless the user turns it on.** Android is an AOSP
+  userdebug build: `su` exists but only Android's shell and root users may
+  run it, which apps never are. Avo's own daemon uses that shell over ADB to
+  set Android up (displays, input routing, clipboard, notifications,
+  installing Google apps). Only the daemon reaches ADB, unless the user
+  turns on ADB support, which lets developer tools on that Mac connect too.
+  Settings › System › Developer › Root access adds Magisk (downloaded from
+  its GitHub release, patched into init_boot's ramdisk); apps then ask
+  Magisk for root, and Magisk asks the user. It is off by default.
 - **What is not locked down**, so you can judge it: SELinux runs in
   permissive mode in current builds, the verified boot state is unlocked
   (orange), and installing Google apps turns off dm-verity and adds an

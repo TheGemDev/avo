@@ -930,6 +930,28 @@ route plays (without the points; a new route id makes the panel ask again);
 `changeLocation(LocationRequest)` changes it. Both are for App Shims and
 Control Panels.
 
+## Android's cameras (Settings › Devices › Cameras)
+
+Each of Android's cameras (`VMConfig.backCamera`, `frontCamera`) is
+Emulated, None or one of this Mac's cameras (`CameraSource`; the picker
+lists built-in, plugged-in and Continuity cameras, `AVCaptureDevice`'s
+discovery, and keeps a chosen camera that is unplugged). While both are
+Emulated, Android has the image's emulated cameras. Otherwise avo-vmm gets
+`--cameras` and gives Android two virtio-media cameras read by the image's
+external camera HAL (engine.md, "Cameras"), and the daemon feeds them
+(`CameraFeed`, AvoDaemonCore): only while Android streams one, the source
+chosen for it runs, the Mac's camera (AVFoundation, cropped to Android's
+size, at most its rate) or a scene drawn on the Mac, as JPEG pictures on a
+control connection of their own. macOS asks for camera access in Avo's name
+the first time Android uses a Mac camera; without it Android sees a picture
+that says how to allow it. Every boot with these cameras the host agent
+patches the HAL so they face back and front (`GuestCamera`).
+
+Which cameras Android has (and so which HAL) is fixed for a start
+(`cameraFlags`): changing it needs a restart. Another source for a camera
+Android has (one Mac camera for another, or the drawn scene) applies at
+once (`DeviceSettingsEngine`).
+
 ## Boot configuration and images
 
 Before each boot the daemon writes a small read-only disk, `avo_config`
