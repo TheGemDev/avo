@@ -106,6 +106,8 @@ public struct VMConfig: Codable, Equatable, Sendable {
     public var adbPort: Int
     /// Android's GPS reports where this Mac is (CoreLocation).
     public var shareLocation: Bool
+    /// An app's Dock icon shows how many notifications it has in Android.
+    public var dockBadges: Bool
     // Devices (Settings › Devices)
     /// Android's Wi-Fi is on (its one network today; off, Android is offline).
     public var wifiEnabled: Bool
@@ -150,7 +152,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
                 graphicsOverrides: [String: AppGraphicsOverride] = [:], performanceHUD: PerformanceHUDLevel = .off,
                 defaultWindowSize: WindowSize = WindowSize(width: 412, height: 892),
                 rooted: Bool = false, deviceProfileID: String = DeviceProfile.defaultID, emulateHardware: Bool = false,
-                gms: GMSMode = .none, adbEnabled: Bool = false, adbPort: Int = VMConfig.defaultADBPort, shareLocation: Bool = true,
+                gms: GMSMode = .none, adbEnabled: Bool = false, adbPort: Int = VMConfig.defaultADBPort, shareLocation: Bool = true, dockBadges: Bool = true,
                 wifiEnabled: Bool = true, networkSpeed: NetworkSpeed = .full, shareMacBluetooth: Bool = true,
                 cellularEnabled: Bool = false, mobileNetworkType: MobileNetworkType = .lte, cellularSignal: Int = 4,
                 backCamera: CameraSource = .emulated, frontCamera: CameraSource = .emulated,
@@ -181,6 +183,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
         self.adbEnabled = adbEnabled
         self.adbPort = adbPort
         self.shareLocation = shareLocation
+        self.dockBadges = dockBadges
         self.wifiEnabled = wifiEnabled
         self.networkSpeed = networkSpeed
         self.shareMacBluetooth = shareMacBluetooth
@@ -276,7 +279,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
         case memoryMiB, cpuCount, balloonWhenIdle, autoPauseMinutes, dataDiskGiB, imageLocation, shareFolder, sharedFolderPath
         case renderer, rendererMode, fpsLimit
         case appGraphics, gameGraphics, graphicsOverrides, performanceHUD
-        case defaultWindowSize, rooted, deviceProfileID, emulateHardware, gms, adbEnabled, adbPort, shareLocation
+        case defaultWindowSize, rooted, deviceProfileID, emulateHardware, gms, adbEnabled, adbPort, shareLocation, dockBadges
         case wifiEnabled, networkSpeed, shareMacBluetooth, cellularEnabled, mobileNetworkType, cellularSignal
         case backCamera, frontCamera, camerasEnabled, microphoneEnabled, bluetoothEnabled, shareClipboard
         case translationAtStartup
@@ -342,6 +345,7 @@ public struct VMConfig: Codable, Equatable, Sendable {
         adbEnabled = try value(.adbEnabled, defaults.adbEnabled)
         adbPort = try value(.adbPort, defaults.adbPort)
         shareLocation = try value(.shareLocation, defaults.shareLocation)
+        dockBadges = try value(.dockBadges, defaults.dockBadges)
         wifiEnabled = try value(.wifiEnabled, defaults.wifiEnabled)
         networkSpeed = try value(.networkSpeed, defaults.networkSpeed)
         shareMacBluetooth = try value(.shareMacBluetooth, defaults.shareMacBluetooth)
@@ -527,6 +531,7 @@ extension VMConfig {
         check(\.adbEnabled, "adbEnabled", .immediate)
         check(\.adbPort, "adbPort", .immediate)
         check(\.shareLocation, "shareLocation", .immediate)
+        check(\.dockBadges, "dockBadges", .immediate)
         // Devices: Android follows at once.
         check(\.wifiEnabled, "wifiEnabled", .immediate)
         check(\.networkSpeed, "networkSpeed", .immediate)
