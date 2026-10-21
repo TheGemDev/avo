@@ -4,6 +4,60 @@ All notable changes to Avo are listed here. Versions follow
 [Semantic Versioning](https://semver.org); preview builds carry a build
 number (`CFBundleVersion`) that only goes up.
 
+## 0.2.0 Preview 2 (build 59)
+
+Mobile network and saved-location fixes for Preview 1, and the phone's CPU
+when Avo emulates a phone's hardware. Signed ad hoc and not notarized like
+the earlier previews: macOS asks you to confirm the first launch (System
+Settings › Privacy & Security › Open Anyway). Install it over Preview 1;
+your Android data stays.
+
+### New
+
+- **The phone's CPU.** With Emulate this phone's hardware (Settings ›
+  Privacy & Security › Device profile), Android also gets the phone's CPU:
+  its cores in /proc/cpuinfo, and a cpufreq policy per cluster with the
+  phone's frequencies, so apps and games that check the CPU see that phone.
+  With fewer Android cores than the phone has (Settings › Performance), its
+  fastest are kept. Every core still runs at your Mac's speed.
+
+### Improved
+
+- **Device profiles.** The OnePlus 13 has its Snapdragon 8 Elite CPU (six
+  Oryon cores up to 3.53 GHz, two up to 4.32 GHz), and the Redmi Note 11 and
+  Redmi A3 report their cores as those phones do.
+
+### Fixed
+
+- **The mobile network** did not work in Preview 1: the SIM never loaded, so
+  Android showed no service and had no mobile data. The SIM now loads on the
+  network Avo, the status bar shows its type (4G for LTE) and signal, and
+  mobile data works.
+- **The saved location** reached Android only once it changed: until then,
+  apps saw Google's offices in Mountain View. Android now has it from its
+  start.
+- **Shutting down Android** could, rarely, leave Avo's engine running: a
+  virtual processor busy with a device at that moment missed the stop.
+- **Root access that did not start Android** made it restart over and over,
+  and Avo waited minutes before starting it again. Avo now turns root back
+  off, says so in a notification and starts Android without it.
+- **The controller panel** opened in the top left corner of the key mapping
+  editor and jumped to its place once dragged. It opens in its place.
+
+### Known issues
+
+- Bluetooth headsets and other classic Bluetooth devices, Bluetooth pairing
+  with the Mac's devices, and calls or SMS on the SIM don't work yet.
+- Root access may not start Android once Google apps are installed in it;
+  Avo then turns root back off.
+- Delta Force draws its terrain flat at the Ultimate and MAX presets; at
+  High and below it is textured (restart the game after changing the
+  preset).
+- With Android's data on an external drive, macOS asks again after an update
+  whether Avo may use the drive, and Android starts only once you allow it.
+- Apps that need hardware attestation (most banking apps, some DRM and
+  anti-cheat systems) generally do not run.
+
 ## 0.2.0 Preview 1 (build 54)
 
 A preview for testers: Android's cameras, Bluetooth, a SIM with mobile data
