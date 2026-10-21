@@ -2026,6 +2026,16 @@
         }
       }
     },
+    "Game Settings (a game)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengaturan Game (sebuah game)"
+          }
+        }
+      }
+    },
     "Game Settings (key mapping)" : {
       "localizations" : {
         "id" : {

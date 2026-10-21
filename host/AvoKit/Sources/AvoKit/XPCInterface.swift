@@ -328,9 +328,13 @@ public struct ConfigurationSnapshot: Codable, Sendable {
     public var storageLocation: StorageLocationStatus?
     /// The folder shared with Android (nil from an older daemon).
     public var sharedFolder: SharedFolderStatus?
+    /// The apps Android lists as games (AppRecord.isGame), for the App
+    /// Shims' graphics (nil from an older daemon).
+    public var games: Set<String>?
 
     public init(config: VMConfig, host: HostInfo, profiles: [DeviceProfile], pendingRestart: Bool, adb: ADBStatus? = nil,
-                dataDisk: DataDiskStatus? = nil, storageLocation: StorageLocationStatus? = nil, sharedFolder: SharedFolderStatus? = nil) {
+                dataDisk: DataDiskStatus? = nil, storageLocation: StorageLocationStatus? = nil, sharedFolder: SharedFolderStatus? = nil,
+                games: Set<String>? = nil) {
         self.config = config
         self.host = host
         self.profiles = profiles
@@ -339,6 +343,7 @@ public struct ConfigurationSnapshot: Codable, Sendable {
         self.dataDisk = dataDisk
         self.storageLocation = storageLocation
         self.sharedFolder = sharedFolder
+        self.games = games
     }
 }
 

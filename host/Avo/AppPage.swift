@@ -302,7 +302,7 @@ private struct AppGraphicsCard: View {
                 let settings = resolved.settings
                 let mode = settings.effectiveMode(device: model.deviceProfile?.display)
                 // The profile the app's graphics start from, switched right here.
-                let automatic: GraphicsProfile = model.hasKeyMapping(app.package) ? .games : .apps
+                let automatic: GraphicsProfile = model.hasKeyMapping(app.package) || model.isGame(app.package) ? .games : .apps
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 4) {
                         Text("Profile").font(.mona(12)).foregroundStyle(Haze.textTertiary)

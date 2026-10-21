@@ -34,7 +34,7 @@ import org.json.JSONObject;
  * prints one JSON object per package and line:
  *
  * <pre>
- *   {"package", "label", "versionName", "versionCode", "sizeBytes", "firstInstallTime", "lastUpdateTime", "system",
+ *   {"package", "label", "versionName", "versionCode", "sizeBytes", "firstInstallTime", "lastUpdateTime", "system", "game",
  *    "backgroundPng" | "backgroundColor", "foregroundPng"     (an AdaptiveIconDrawable's full-bleed 108 dp layers)
  *    "iconPng"                                                (any other launcher icon)}
  *   {"package", "error"}                                      (not installed, not readable)
@@ -109,6 +109,9 @@ final class AppInfo {
         json.put("firstInstallTime", info.firstInstallTime);
         json.put("lastUpdateTime", info.lastUpdateTime);
         json.put("system", (app.flags & ApplicationInfo.FLAG_SYSTEM) != 0);
+        // A game by its own account: its manifest's appCategory, or the older isGame.
+        @SuppressWarnings("deprecation") boolean flaggedGame = (app.flags & ApplicationInfo.FLAG_IS_GAME) != 0;
+        json.put("game", app.category == ApplicationInfo.CATEGORY_GAME || flaggedGame);
         JSONObject icon;
         try {
             icon = iconKeys(icon(pm, activity, app));

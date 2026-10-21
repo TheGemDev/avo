@@ -2789,6 +2789,16 @@
         }
       }
     },
+    "Avo uses game settings because the app says it is a game." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avo memakai pengaturan game karena aplikasi ini menyatakan dirinya game."
+          }
+        }
+      }
+    },
     "Avo uses game settings because this app has a key mapping." : {
       "localizations" : {
         "id" : {

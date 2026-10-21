@@ -659,7 +659,12 @@ final class ControlPanelModel {
 
     /// The settings `package`'s windows use now.
     func graphics(for package: String) -> ResolvedGraphics? {
-        config?.graphics(for: package, hasKeyMapping: hasKeyMapping(package))
+        config?.graphics(for: package, hasKeyMapping: hasKeyMapping(package), isGame: isGame(package))
+    }
+
+    /// Android lists the app as a game (its manifest says so).
+    func isGame(_ package: String) -> Bool {
+        apps.first { $0.package == package }?.isGame == true
     }
 
     // MARK: Apps

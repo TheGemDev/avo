@@ -343,6 +343,8 @@ public struct ResolvedGraphics: Equatable, Sendable {
         case chosen
         /// Games, because the app has a usable key mapping.
         case keyMapping
+        /// Games, because the app says it is one (its manifest's category).
+        case androidGame
         /// Apps: nothing chose otherwise.
         case none
     }
@@ -399,7 +401,9 @@ extension VMConfig {
     /// The override's profile, else Games when the app has a key mapping
     /// (`KeymapProfile.usable(for:bundledDirectory:)`), else Apps; then the
     /// override's changes on top.
-    public func graphics(for package: String, hasKeyMapping: Bool) -> ResolvedGraphics {
+    /// `isGame`: Android lists the app as a game (AppRecord.isGame); a key
+    /// mapping, and the user's choice before it, come first.
+    public func graphics(for package: String, hasKeyMapping: Bool, isGame: Bool = false) -> ResolvedGraphics {
         let override = graphicsOverrides[package]
         let profile: GraphicsProfile
         let reason: ResolvedGraphics.Reason
@@ -409,6 +413,9 @@ extension VMConfig {
         } else if hasKeyMapping {
             profile = .games
             reason = .keyMapping
+        } else if isGame {
+            profile = .games
+            reason = .androidGame
         } else {
             profile = .apps
             reason = ResolvedGraphics.Reason.none

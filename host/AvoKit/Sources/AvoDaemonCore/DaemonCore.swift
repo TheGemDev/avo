@@ -696,7 +696,8 @@ public actor DaemonCore {
                                      pendingRestart: (bootedConfig.map { config.effect(of: $0) == .restartRequired } ?? false)
                                          || frameRateNeedsRestart(config.fpsLimit),
                                      adb: adbStatus, dataDisk: await dataDiskStatus(), storageLocation: await storage.status(),
-                                     sharedFolder: await sharedFolderStatus())
+                                     sharedFolder: await sharedFolderStatus(),
+                                     games: Set(await registry.all().filter { $0.isGame == true }.map(\.package)))
     }
 
     public func updateConfiguration(_ new: VMConfig, client: ClientID) async throws -> ConfigUpdateResult {

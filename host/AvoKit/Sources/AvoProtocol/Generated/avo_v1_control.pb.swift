@@ -897,11 +897,24 @@ public nonisolated struct Avo_V1_AppInfo: Sendable {
 
   public var installerPackage: String = String()
 
+  /// The app says it is a game (its manifest's appCategory="game", or the
+  /// older isGame). Unset when Android was not asked (read from the APK, or
+  /// only listed).
+  public var game: Bool {
+    get {_game ?? false}
+    set {_game = newValue}
+  }
+  /// Returns true if `game` has been explicitly set.
+  public var hasGame: Bool {self._game != nil}
+  /// Clears the value of `game`. Subsequent reads from it will return its default value.
+  public mutating func clearGame() {self._game = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
   fileprivate var _adaptiveIcon: Avo_V1_AdaptiveIcon? = nil
+  fileprivate var _game: Bool? = nil
 }
 
 public nonisolated struct Avo_V1_AppInstalled: Sendable {
@@ -2538,7 +2551,7 @@ nonisolated extension Avo_V1_AdaptiveIcon: SwiftProtobuf.Message, SwiftProtobuf.
 
 nonisolated extension Avo_V1_AppInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AppInfo"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}package\0\u{1}label\0\u{3}version_name\0\u{3}version_code\0\u{3}icon_png\0\u{3}adaptive_icon\0\u{3}size_bytes\0\u{3}first_install_time_ms\0\u{3}last_update_time_ms\0\u{3}system_app\0\u{1}launchable\0\u{3}installer_package\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}package\0\u{1}label\0\u{3}version_name\0\u{3}version_code\0\u{3}icon_png\0\u{3}adaptive_icon\0\u{3}size_bytes\0\u{3}first_install_time_ms\0\u{3}last_update_time_ms\0\u{3}system_app\0\u{1}launchable\0\u{3}installer_package\0\u{1}game\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2558,6 +2571,7 @@ nonisolated extension Avo_V1_AppInfo: SwiftProtobuf.Message, SwiftProtobuf._Mess
       case 10: try { try decoder.decodeSingularBoolField(value: &self.systemApp) }()
       case 11: try { try decoder.decodeSingularBoolField(value: &self.launchable) }()
       case 12: try { try decoder.decodeSingularStringField(value: &self.installerPackage) }()
+      case 13: try { try decoder.decodeSingularBoolField(value: &self._game) }()
       default: break
       }
     }
@@ -2604,6 +2618,9 @@ nonisolated extension Avo_V1_AppInfo: SwiftProtobuf.Message, SwiftProtobuf._Mess
     if !self.installerPackage.isEmpty {
       try visitor.visitSingularStringField(value: self.installerPackage, fieldNumber: 12)
     }
+    try { if let v = self._game {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 13)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2620,6 +2637,7 @@ nonisolated extension Avo_V1_AppInfo: SwiftProtobuf.Message, SwiftProtobuf._Mess
     if lhs.systemApp != rhs.systemApp {return false}
     if lhs.launchable != rhs.launchable {return false}
     if lhs.installerPackage != rhs.installerPackage {return false}
+    if lhs._game != rhs._game {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

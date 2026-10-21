@@ -229,4 +229,16 @@ private func decode(_ json: String) throws -> VMConfig {
         #expect((chosen.profile, chosen.reason, chosen.settings) == (.apps, .chosen, .appsDefault))
         #expect(chosen.changes.isEmpty)
     }
+
+    /// An app Android lists as a game gets the Games profile, after the
+    /// user's choice and a key mapping.
+    @Test func androidsGamesUseTheGamesProfile() {
+        var config = VMConfig()
+        let game = config.graphics(for: "com.x", hasKeyMapping: false, isGame: true)
+        #expect((game.profile, game.reason, game.settings) == (.games, .androidGame, .gamesDefault))
+        #expect(config.graphics(for: "com.x", hasKeyMapping: true, isGame: true).reason == .keyMapping)
+        config.graphicsOverrides["com.x"] = AppGraphicsOverride(profile: .apps)
+        let chosen = config.graphics(for: "com.x", hasKeyMapping: false, isGame: true)
+        #expect((chosen.profile, chosen.reason) == (.apps, .chosen))
+    }
 }
