@@ -40,6 +40,9 @@ enum MagiskRoot {
     static func directory(_ paths: AvoPaths) -> URL { paths.vm.appending(path: "magisk", directoryHint: .isDirectory) }
     static func patchedImage(_ paths: AvoPaths) -> URL { directory(paths).appending(path: "init_boot.img") }
     static func recordFile(_ paths: AvoPaths) -> URL { directory(paths).appending(path: "init_boot.json") }
+    /// The kernel's log of the last start with Magisk that did not get
+    /// Android ready (DaemonCore.prepareRoot): why it rebooted.
+    static func failedBootLog(_ paths: AvoPaths) -> URL { directory(paths).appending(path: "failed-boot-kernel.log") }
     static func cachedAPK(_ paths: AvoPaths) -> URL {
         paths.home.appending(path: "Library/Caches/Avo/magisk/Magisk-v\(release.version).apk")
     }

@@ -67,6 +67,9 @@ final class RootFakeEngine: RootEngine, @unchecked Sendable {
     private var rooted = false
     private(set) var prepares = 0
     var failure: (any Error)?
+    /// Magisk does not start this Android: a rooted start never gets ready,
+    /// and Android reboots soon after (avo-vmm's `AndroidRebooted` exit).
+    var rebootsRooted = false
     var name: String { inner.name }
     var exits: AsyncStream<(any Error)?> { inner.exits }
 
@@ -75,8 +78,22 @@ final class RootFakeEngine: RootEngine, @unchecked Sendable {
     var launches: [EngineLaunch] { inner.launches }
 
     func start(_ launch: EngineLaunch) async throws {
-        lock.withLock { rooted = launch.config.rooted && patched }
+        let failing = lock.withLock {
+            rooted = launch.config.rooted && patched
+            return rooted && rebootsRooted
+        }
+        inner.refuseControlConnections = failing ? Int.max : 0
         try await inner.start(launch)
+        guard failing else { return }
+        // What the engine logs of a start that reboots.
+        let log = launch.paths.instance.appending(path: "kernel.log")
+        try? FileManager.default.createDirectory(at: launch.paths.instance, withIntermediateDirectories: true)
+        try? Data("magiskinit: First Stage Init\ninit: Reboot start, reason: test\n".utf8).write(to: log)
+        let inner = self.inner
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            inner.exit(AndroidRebooted())
+        }
     }
 
     func stop() async { await inner.stop() }
@@ -97,13 +114,15 @@ final class RootFakeEngine: RootEngine, @unchecked Sendable {
 @Suite(.serialized, .timeLimit(.minutes(1))) struct RootDaemonFlowTests {
     private struct Harness {
         let root: URL
+        let paths: AvoPaths
         let engine: RootFakeEngine
         let notifications = RecordingNotifications()
         let core: DaemonCore
 
-        init() throws {
+        init(bootTimeout: Duration = .seconds(5)) throws {
             root = FileManager.default.temporaryDirectory.appending(path: "avo-root-daemon-\(UUID().uuidString.prefix(8))")
             let paths = AvoPaths(home: root.appending(path: "home"), temporaryDirectory: root.appending(path: "tmp"))
+            self.paths = paths
             try FileManager.default.createDirectory(at: paths.desktop, withIntermediateDirectories: true)
             var config = VMConfig()
             config.createDesktopAlias = false
@@ -124,7 +143,7 @@ final class RootFakeEngine: RootEngine, @unchecked Sendable {
             let host = HostInfo(physicalMemoryBytes: 32 << 30, performanceCores: 8, efficiencyCores: 4, isAppleSilicon: true, macOSVersion: "27.0")
             core = DaemonCore(.init(paths: paths, engine: engine, adbKey: adbKey, profiles: profiles, host: host,
                                     shortcuts: ShortcutManager(builder: builder, paths: paths), notifications: notifications,
-                                    softwareVersion: "avo-host test", bootTimeout: .seconds(5), loadImage: { image }))
+                                    softwareVersion: "avo-host test", bootTimeout: bootTimeout, loadImage: { image }))
         }
 
         func controlPanel() async -> UUID {
@@ -175,6 +194,30 @@ final class RootFakeEngine: RootEngine, @unchecked Sendable {
         #expect(harness.notifications.posted.map(\.title) == ["Root could not be turned on"])
         #expect(harness.engine.launches.count == 1, "Android was not restarted")
         #expect(await !harness.engine.bootedRooted())
+    }
+
+    /// Magisk does not start this Android: it reboots before it is ready.
+    /// Root goes off again with a notification, the kernel's log of that
+    /// start is kept, and Android starts without root at once, not after the
+    /// boot's timeout (a minute here, longer than the test may take).
+    @Test func aRootedStartThatRebootsTurnsRootOffAgain() async throws {
+        let harness = try Harness(bootTimeout: .seconds(60))
+        defer { harness.cleanUp() }
+        harness.engine.rebootsRooted = true
+        let panel = await harness.controlPanel()
+        try await harness.core.startVM(client: panel)
+        var config = await harness.core.configurationSnapshot().config
+        config.rooted = true
+        _ = try await harness.core.updateConfiguration(config, client: panel)
+        #expect(await eventually(timeout: .seconds(10)) { await !harness.core.configurationSnapshot().config.rooted })
+        #expect(await eventually(timeout: .seconds(10)) {
+            await harness.core.vm.status.state == .running && harness.engine.launches.count == 3
+        })
+        #expect(await !harness.engine.bootedRooted())
+        #expect(harness.engine.launches.map(\.config.rooted) == [false, true, false])
+        #expect(harness.notifications.posted.map(\.title) == ["Root could not be turned on"])
+        let kept = try String(contentsOf: MagiskRoot.failedBootLog(harness.paths), encoding: .utf8)
+        #expect(kept.contains("init: Reboot start, reason: test"))
     }
 }
 

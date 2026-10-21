@@ -664,6 +664,16 @@
         }
       }
     },
+    "Android restarted while it started with Magisk, so Avo started it again without root. Your apps and data are as they were." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Android memulai ulang saat dinyalakan dengan Magisk, jadi Avo menyalakannya lagi tanpa root. Aplikasi dan data Anda tetap seperti semula."
+          }
+        }
+      }
+    },
     "Android restarts to make its system partitions writable." : {
       "localizations" : {
         "id" : {
