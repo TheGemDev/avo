@@ -295,7 +295,7 @@ GLES 3.1 and Vulkan 1.3.
 - **Limits**: one refresh rate for all of Android's displays per boot (60
   to 120 Hz; below), ES 3.1 (no geometry shaders in MoltenVK; with the
   guest Vulkan layer, above), first-vertex `flat` varyings, no zero-copy
-  yet, no quick boot.
+  yet, no quick boot (below, after "Pause").
 - **Refresh rate** (`virtio/gpu/edid.rs`, both modes): the virtio-gpu offers
   EDIDs (`VIRTIO_GPU_F_EDID`). A scanout's preferred timing is its size at
   its rate, 60 Hz unless `display <i> <w> <h> <hz>` or, for display 0,
@@ -421,6 +421,30 @@ test VM: about 8% of one core idle and running, 0% paused (0.2% in GPU mode),
 a pause takes well under a second, adbd answers a command sent during the
 pause right after `resume`, and frames come again at once. When the daemon
 goes away during a pause, the engine resumes before it powers Android off.
+
+A pause is also how a checkpoint holds Android still (architecture.md,
+"Checkpoints"): virtio-blk handles each request on the vCPU that notified it
+(`Block::notify`), so once every vCPU waits at the gate no disk write is half
+done, and the daemon clones Android's disks before it resumes.
+
+**Quick boot** (not there). Starting from a snapshot of a running Android
+needs everything the guest can see saved and put back: guest RAM (anonymous
+memory today, `hvf/src/memory.rs`), every vCPU's registers and system registers
+(`hv_vcpu_get_reg`/`get_sys_reg`), the vtimer offsets, the in-kernel GIC
+(`hv_gic_state_*`, not bound yet in `hvf-sys`), and each device's state:
+virtio-pci transports and queues, block, the 20 consoles, rng, vsock
+(connections to Mac sockets that would not exist after a restore), the three
+NICs with the NAT's TCP and UDP flows, sound, input, the gamepad, virtio-fs
+(open guest file handles), media (cameras), the modem, Bluetooth, the
+sensors and GNSS. None of them serializes its state yet. The blocker is the
+GPU: gfxstream holds the guest's GL and Vulkan objects on the Mac's GPU, and
+the Android Emulator's `libgfxstream_backend.dylib` (37.1) has
+`stream_renderer_snapshot` and `stream_renderer_restore` only as stubs that
+log "Snapshot save requested without support." and return -EINVAL, so a
+GPU-mode Android cannot be snapshotted with the renderer Avo uses. A
+software-rendered Android could be, once every device above saves its state.
+The control socket's `snapshot` command still writes a frame (above), and
+`VMMEngine.snapshot(to:)` refuses.
 
 `--properties FILE` replaces image properties before anything reads them
 (the device profile, by default Avo's honest identity, plus Avo's

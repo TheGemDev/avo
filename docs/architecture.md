@@ -1238,6 +1238,55 @@ the record, cached by the file's identity).
   data whose Android is not on the Mac yet). `avoctl storage …` does the same
   from the command line.
 
+## Checkpoints (Settings › Android › Checkpoints)
+
+Restore points of Android's apps and data, beside the data wherever it is
+(`CheckpointStore`, `DaemonCheckpoints.swift`):
+
+```
+<data>/checkpoints/<id>/checkpoint.json   Checkpoint: reason, date, the Android that used the data,
+                                          and the settings that belong to it (root, Google apps,
+                                          device profile and its hardware); written last
+<data>/checkpoints/<id>/userdata.img …    AvoPaths.portableDataItems, without avo-data.json
+```
+
+- **Clones only.** Every item is an APFS clone (`clonefile`): a checkpoint is
+  made in a moment and shares its blocks with the data until Android changes
+  them. There is no copy fallback (a copy of the data disk takes minutes and
+  as much space again): with the data on a drive that cannot clone, the pane
+  says so (`CheckpointStatus.problem`) and Avo makes none.
+- **While Android runs.** `makeCheckpoint` has Android `sync` over adb (at
+  most 20 s; without it the checkpoint is as after a power loss), then
+  `VMManager.holdingStill` stops its vCPUs for the clone and lets them go on,
+  the guest clock adjusted as after a pause; the status does not change. A
+  stopped or paused Android needs no hold. avo-vmm handles every virtio-blk
+  request on the vCPU that notified it, so no write is half done while the
+  vCPUs are stopped; each item is fsynced before it is cloned.
+- **Automatic checkpoints** come before a change Android cannot take back:
+  root turned on and another device profile or its hardware
+  (`updateConfiguration`), Google apps installed or removed (after the
+  checks, before the download), the first start of a newer Android than the
+  data was last used with (`bootVM`, from `android-data.json` and the image
+  that starts, which would upgrade the data for good), and a restore. None
+  when Android has no data yet or the drive cannot clone; a failure is
+  logged and the change goes ahead. The newest five automatic ones stay
+  (`CheckpointStatus.automaticLimit`); the user's own stay until deleted.
+- **Restore** (`restoreCheckpoint`): refused for data from a newer Android
+  than the image that starts. Android stops; its data now becomes a `restore`
+  checkpoint (so the restore can be undone); the checkpoint's items are
+  cloned into `.avo-restoring` beside the data, then replace it with the data
+  disk last, and items the checkpoint did not have (Google apps installed
+  after it) go. The checkpoint stays. The settings it kept come back, the
+  data disk's size follows what Android said of it, fingers reload, and
+  Android starts again when it ran; the apps list follows at that start
+  (`syncApps`).
+- **What erases them.** Reset Android and Android's own factory reset take
+  the checkpoints with the data; moving the data elsewhere removes them with
+  the old copy (a kept old copy keeps its checkpoints). `avoctl checkpoints`
+  lists, creates, restores and deletes them.
+- **Quick boot** (a snapshot of the running VM's memory and devices) is not
+  part of checkpoints; see engine.md, "Quick boot".
+
 ## The shared folder (Settings › Storage › Shared Folder)
 
 A folder on the Mac that Android sees as “Avo Shared” in its storage

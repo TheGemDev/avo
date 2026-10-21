@@ -825,6 +825,16 @@
         }
       }
     },
+    "A checkpoint keeps Android’s apps and data as they are, to go back to later. Avo makes one by itself before it turns on root, installs or removes Google apps, changes the device profile or starts a newer Android version, and keeps the newest %lld of those. Yours stay until you delete them." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checkpoint menyimpan aplikasi dan data Android seperti adanya, untuk dikembalikan nanti. Avo membuatnya sendiri sebelum mengaktifkan root, menginstal atau menghapus aplikasi Google, mengganti profil perangkat, atau memulai versi Android yang lebih baru, dan menyimpan %lld yang terbaru di antaranya. Checkpoint buatan Anda tetap ada sampai Anda menghapusnya."
+          }
+        }
+      }
+    },
     "A chosen place" : {
       "localizations" : {
         "id" : {
@@ -2119,12 +2129,42 @@
         }
       }
     },
+    "Android’s apps and data can no longer go back to it. The space only this checkpoint takes becomes free." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi dan data Android tidak bisa lagi dikembalikan ke checkpoint ini. Ruang yang hanya dipakai checkpoint ini menjadi kosong."
+          }
+        }
+      }
+    },
+    "Android’s apps and data are kept as they are now. A running Android holds still for a moment." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi dan data Android disimpan seperti sekarang. Android yang sedang berjalan berhenti sejenak."
+          }
+        }
+      }
+    },
     "Android’s apps and data from another Mac, in the “Avo Android Data” folder Avo made there. Android starts with them, where they are." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikasi dan data Android dari Mac lain, di folder “Avo Android Data” yang dibuat Avo di sana. Android berjalan dengan data itu, di tempatnya."
+          }
+        }
+      }
+    },
+    "Android’s apps and data go back to how they were on %@. What Android has now is kept as a checkpoint, so you can come back to it. A running Android restarts." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi dan data Android kembali seperti pada %@. Isi Android saat ini disimpan sebagai checkpoint, jadi Anda bisa kembali ke sana. Android yang sedang berjalan dimulai ulang."
           }
         }
       }
@@ -3398,6 +3438,26 @@
         }
       }
     },
+    "Checkpoints share their space with Android’s data and take more only as Android changes it. They need Android’s data on an APFS drive. Reset Android and moving Android’s data erase them." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checkpoint berbagi ruang dengan data Android dan hanya memakai lebih banyak ruang saat Android mengubahnya. Checkpoint memerlukan data Android di drive APFS. Reset Android dan memindahkan data Android akan menghapusnya."
+          }
+        }
+      }
+    },
+    "Checkpoints" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checkpoint"
+          }
+        }
+      }
+    },
     "Chipset" : {
       "localizations" : {
         "id" : {
@@ -3889,6 +3949,36 @@
         }
       }
     },
+    "Create Checkpoint…" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat Checkpoint…"
+          }
+        }
+      }
+    },
+    "Create Checkpoint" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat Checkpoint"
+          }
+        }
+      }
+    },
+    "Create" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat"
+          }
+        }
+      }
+    },
     "Create Key Mapping…" : {
       "localizations" : {
         "id" : {
@@ -3986,6 +4076,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukuran jendela default"
+          }
+        }
+      }
+    },
+    "Delete “%@”?" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus “%@”?"
+          }
+        }
+      }
+    },
+    "Delete Checkpoint" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus Checkpoint"
           }
         }
       }
@@ -5845,6 +5955,16 @@
         }
       }
     },
+    "Its checkpoints are erased too." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checkpoint-nya juga dihapus."
+          }
+        }
+      }
+    },
     "Its size on the Mac, in points" : {
 
     },
@@ -6209,6 +6329,16 @@
         }
       }
     },
+    "Making a checkpoint…" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membuat checkpoint…"
+          }
+        }
+      }
+    },
     "Making the system partitions writable…" : {
       "localizations" : {
         "id" : {
@@ -6449,6 +6579,16 @@
         }
       }
     },
+    "Name (optional)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama (opsional)"
+          }
+        }
+      }
+    },
     "Names and IDs change; abilities (ABI, API level, GPU features) stay this Mac’s. It does not pass hardware attestation, and Avo still identifies itself. Applies after Android restarts." : {
       "localizations" : {
         "id" : {
@@ -6615,6 +6755,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tidak Ada Hasil"
+          }
+        }
+      }
+    },
+    "No checkpoints yet." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum ada checkpoint."
           }
         }
       }
@@ -8019,6 +8169,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Memulai ulang Android…"
+          }
+        }
+      }
+    },
+    "Restoring the checkpoint…" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memulihkan checkpoint…"
+          }
+        }
+      }
+    },
+    "Restoring one stops Android, keeps what it has now as another checkpoint, and starts it again with the checkpoint’s apps and data, and its root, Google apps and device profile settings." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memulihkan checkpoint menghentikan Android, menyimpan isinya saat ini sebagai checkpoint lain, lalu memulainya lagi dengan aplikasi dan data checkpoint itu, beserta pengaturan root, aplikasi Google, dan profil perangkatnya."
+          }
+        }
+      }
+    },
+    "Restore…" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan…"
+          }
+        }
+      }
+    },
+    "Restore “%@”?" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan “%@”?"
+          }
+        }
+      }
+    },
+    "Restore Checkpoint" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Checkpoint"
+          }
+        }
+      }
+    },
+    "Restore" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan"
           }
         }
       }

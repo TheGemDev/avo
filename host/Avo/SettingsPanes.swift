@@ -647,6 +647,8 @@ struct SystemPane: View {
                 }
             }
             .shown(sections.contains(.translation))
+            CheckpointsSection()
+                .shown(sections.contains(.checkpoints))
             Section("Maintenance") {
                 Button("Reset Android…", role: .destructive) { confirmReset = true }
                     .disabled(model.isInstallingGoogleApps)
@@ -720,6 +722,9 @@ struct SystemPane: View {
         if model.fingerprints?.fingers.contains(where: \.enrolled) ?? false {
             text = text + Text(verbatim: " ") + Text("Android forgets its fingerprints; your fingers stay in Settings › Fingerprints, to add again.")
         }
+        if !(model.checkpoints?.checkpoints.isEmpty ?? true) {
+            text = text + Text(verbatim: " ") + Text("Its checkpoints are erased too.")
+        }
         return text
     }
 }
@@ -743,7 +748,8 @@ struct SystemSections: OptionSet {
     static let microphone = SystemSections(rawValue: 1 << 13)
     static let clipboard = SystemSections(rawValue: 1 << 14)
     static let translation = SystemSections(rawValue: 1 << 15)
-    static let all = SystemSections(rawValue: (1 << 16) - 1)
+    static let checkpoints = SystemSections(rawValue: 1 << 16)
+    static let all = SystemSections(rawValue: (1 << 17) - 1)
 }
 
 extension View {
