@@ -239,9 +239,27 @@ GLES 3.1 and Vulkan 1.3.
   textures read back black, stale or magenta). The same layer traces what
   the guest's renderers ask of MoltenVK when `AVO_VK_TRACE=1` is set or
   `~/Library/Logs/Avo/vk-trace.on` exists as the engine starts: each kind of
-  image, view and sampler, every layout past Metal's 16 samplers a stage, and
-  every failed pipeline, image or image-format query, once each, with the
-  time, as `[vk-trace]` lines in `avo-vmm.log`. Off, it hooks nothing.
+  image, view and sampler, every layout past Metal's 16 samplers a stage, the
+  device's memory types and each memory type and size class allocated (0x10
+  is lazily allocated, Metal's memoryless), and every failed pipeline, image,
+  image-format query, allocation or image binding, once each, with the time,
+  as `[vk-trace]` lines in `avo-vmm.log`. Off, it hooks nothing.
+- **No memoryless memory** (the same layer, always on; `AVO_NATIVE_ASTC=0`
+  turns off only the ASTC part): MoltenVK's last memory type is lazily
+  allocated (Metal's memoryless storage, 0x11), and MoltenVK gives it only to
+  transient attachments that are not input attachments. ANGLE makes every
+  implicit multisampled image (GL's multisampled render to texture: WebGL's
+  antialiased canvases, games' MSAA) a transient attachment needing lazily
+  allocated memory whenever such a type exists, and a color one is an input
+  attachment too, so no type fit and ANGLE's allocator failed with
+  `VK_ERROR_FEATURE_NOT_PRESENT` (`initMemoryAndNonZeroFillIfNeeded` in
+  logcat): the image had no memory and the game drew garbage there (PUBG's
+  WebView pages, its end screen). The layer drops that type from the memory
+  properties gfxstream reads, and its bit from image memory requirements and
+  Metal handle properties, so ANGLE gives those images ordinary device
+  memory. Checked against MoltenVK 1.4.0 directly: without the layer a 4x
+  color image with ANGLE's usage finds no type; with it, type 0 allocates and
+  binds.
 - **Frames**: on each flush the engine reads the composed buffer back into the
   same shared-memory frames as software (0.6–1.2 ms a frame measured at
   720×1280 and 1080×1920), so the daemon, MetalFX and recording are
