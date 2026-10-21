@@ -589,6 +589,7 @@ actor HostAgent: DisplayResizing {
             try? await Task.sleep(for: .seconds(1))
             guard cellularWanted else { return }
         }
+        logger.notice("mobile network: the SIM was not loaded after a minute; LTE stays \"LTE\" in the status bar")
     }
 
     private func joinWiFi() async {
