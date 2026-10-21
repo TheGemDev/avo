@@ -228,7 +228,12 @@ GLES 3.1 and Vulkan 1.3.
   `vkCmdPipelineBarrier2` or `vkCmdWaitEvents` into a sampled layout the
   guest layer adds one, and it turns `vkCmdCopyBufferToImage2` into
   `vkCmdCopyBufferToImage`, whose data gfxstream keeps (otherwise such
-  textures read back black, stale or magenta).
+  textures read back black, stale or magenta). The same layer traces what
+  the guest's renderers ask of MoltenVK when `AVO_VK_TRACE=1` is set or
+  `~/Library/Logs/Avo/vk-trace.on` exists as the engine starts: each kind of
+  image, view and sampler, every layout past Metal's 16 samplers a stage, and
+  every failed pipeline, image or image-format query, once each, with the
+  time, as `[vk-trace]` lines in `avo-vmm.log`. Off, it hooks nothing.
 - **Frames**: on each flush the engine reads the composed buffer back into the
   same shared-memory frames as software (0.6–1.2 ms a frame measured at
   720×1280 and 1080×1920), so the daemon, MetalFX and recording are
