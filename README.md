@@ -86,10 +86,12 @@ your Mac's GPU through gfxstream and Metal.
 - macOS 15 Sequoia or newer.
 - At least 10 GB of free disk space: the Android image, and a data disk that
   grows as you use it.
-- For GPU rendering (recommended for games): Google's
-  [Android Emulator](https://developer.android.com/studio/run/emulator),
-  installed with Android Studio or the SDK command-line tools. Avo uses its
-  gfxstream renderer. Without it, Android renders in software.
+
+GPU rendering is built in: Avo ships its own gfxstream renderer, the Vulkan
+loader and MoltenVK, built from source, so you need no Android Studio for it.
+Only Android's Bluetooth still needs Google's
+[Android Emulator](https://developer.android.com/studio/run/emulator)
+(installed with Android Studio or the SDK command-line tools).
 
 ## Installing a preview build
 
@@ -109,12 +111,14 @@ one. Your Android data stays in `~/Library/Application Support/Avo`.
 ## Building from source
 
 Requirements: Xcode 26 or later, [XcodeGen](https://github.com/yonaskolb/XcodeGen),
-and a Rust toolchain (`rustup`, stable) for the engine. The Android SDK is
-needed only to rebuild the small Android helpers, which are checked in.
+a Rust toolchain (`rustup`, stable) for the engine, and CMake and Ninja for
+the GPU renderer. The Android SDK is needed only to rebuild the small Android
+helpers, which are checked in.
 
 ```sh
 make test       # host unit and integration tests (swift test)
 make project    # generate host/Avo.xcodeproj
+make gfxstream  # build the GPU renderer from source (once; about 6 minutes)
 make build      # build Avo.app (Debug) into build/DerivedData
 make helpers    # rebuild the Android helpers embedded in the daemon
 cd engine/hvf && cargo test   # engine tests

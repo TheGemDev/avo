@@ -459,14 +459,16 @@ extension VMMEngine {
     /// failure; published right away so the Control Panel shows the choice.
     private func gpuPlan(for launch: EngineLaunch) -> GPUPlan {
         let requested = launch.config.rendererMode
-        let emulator = requested == .software ? nil : AndroidEmulator.lookup(home: launch.paths.home)
+        let emulator = requested == .software ? nil
+            : AndroidEmulator.lookup(home: launch.paths.home, bundled: AndroidEmulator.bundled(engine: executable))
         let fallback = GPUFallbackRecord.load(paths: launch.paths)
         var key: String?
         if case let .found(found)? = emulator { key = GPUFallbackRecord.key(engine: executable, emulator: found) }
         let plan = GPUPlan.decide(mode: requested, emulator: emulator ?? .missing, fallback: fallback, key: key)
         switch plan {
         case let .gpu(found):
-            logger.notice("renderer: GPU with the Android Emulator \(found.version, privacy: .public) at \(found.directory.path, privacy: .public)")
+            let source = found.isBundled ? "Avo's renderer" : "the Android Emulator"
+            logger.notice("renderer: GPU with \(source, privacy: .public) \(found.version, privacy: .public) at \(found.directory.path, privacy: .public)")
         case let .software(reason, failure):
             logger.notice("renderer: software (\(reason.rawValue, privacy: .public)\(failure.map { ", \($0.rawValue)" } ?? "", privacy: .public))")
         }

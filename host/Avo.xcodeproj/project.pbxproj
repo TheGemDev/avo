@@ -648,6 +648,7 @@
 				1D53782E6B5857E8BE21FBDA /* Embed Dependencies */,
 				9B5483BA2FEF5F7A9BECF5F2 /* Embed Dependencies */,
 				0DF9162A1C0539A6B7AA1B4F /* Build avo-vmm */,
+				4985470071A358EF376C36F2 /* Embed the GPU renderer */,
 			);
 			buildRules = (
 			);
@@ -873,6 +874,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "set -euo pipefail\nCARGO=\"${CARGO:-$HOME/.cargo/bin/cargo}\"\nENGINE=\"$SRCROOT/../engine/hvf\"\nOUT=\"$TARGET_BUILD_DIR/$EXECUTABLE_FOLDER_PATH/avo-vmm\"\nif [ ! -x \"$CARGO\" ]; then\n  echo \"warning: cargo not found; Avo.app is built without avo-vmm (install Rust: https://rustup.rs)\"\n  exit 0\nfi\n\"$CARGO\" build --release --quiet --manifest-path \"$ENGINE/Cargo.toml\" -p avo-vmm --target-dir \"$DERIVED_FILE_DIR/cargo\"\n# Nothing to do when neither the engine nor its entitlements changed:\n# Avo.app stays sealed.\nINSTALLED=\"$DERIVED_FILE_DIR/avo-vmm.installed\"\nif [ -f \"$OUT\" ] && cmp -s \"$DERIVED_FILE_DIR/cargo/release/avo-vmm\" \"$INSTALLED\" \\\n   && [ ! \"$ENGINE/hypervisor.entitlements\" -nt \"$INSTALLED\" ]; then\n  exit 0\nfi\nSTAGED=\"$DERIVED_FILE_DIR/avo-vmm\"\ncp \"$DERIVED_FILE_DIR/cargo/release/avo-vmm\" \"$STAGED\"\ncodesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" --options runtime \\\n  --entitlements \"$ENGINE/hypervisor.entitlements\" \"$STAGED\"\n# Replace, never overwrite: macOS kills a running VM whose signed\n# executable pages change underneath it.\nmv -f \"$STAGED\" \"$OUT\"\ncp \"$DERIVED_FILE_DIR/cargo/release/avo-vmm\" \"$INSTALLED\"\n# Xcode does not sign the app again when only this file changed:\n# seal the bundle over the new engine (keeping its entitlements),\n# or every Avo process fails code signature checks.\nif codesign --display \"$TARGET_BUILD_DIR/$WRAPPER_NAME\" >/dev/null 2>&1; then\n  codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" \\\n    --preserve-metadata=identifier,entitlements,requirements,flags,runtime \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\nfi\n";
+		};
+		4985470071A358EF376C36F2 /* Embed the GPU renderer */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed the GPU renderer";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\nRENDERER=\"$SRCROOT/../build/gfxstream\"\nOUT=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/gfxstream\"\nif [ ! -f \"$RENDERER/.stamp\" ]; then\n  echo \"warning: no GPU renderer in build/gfxstream (run scripts/build-gfxstream.sh); Avo.app then needs the Android Emulator for the GPU\"\n  exit 0\nfi\n# Nothing to do when the renderer did not change: Avo.app stays sealed.\nif [ -f \"$OUT/.stamp\" ] && cmp -s \"$RENDERER/.stamp\" \"$OUT/.stamp\"; then\n  exit 0\nfi\nrm -rf \"$OUT.new\"\nditto \"$RENDERER\" \"$OUT.new\"\nfind \"$OUT.new\" -name \"*.dylib\" -exec codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" {} \\;\n# Replace, never overwrite: a running avo-vmm has the old libraries mapped.\nrm -rf \"$OUT\"\nmv \"$OUT.new\" \"$OUT\"\nif codesign --display \"$TARGET_BUILD_DIR/$WRAPPER_NAME\" >/dev/null 2>&1; then\n  codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" \\\n    --preserve-metadata=identifier,entitlements,requirements,flags,runtime \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

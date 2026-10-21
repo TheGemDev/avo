@@ -164,14 +164,22 @@ device comes last (see "Shared folder" below). Frames go to shared memory
 (`vulkan.ranchu`) go through gfxstream to MoltenVK and Metal; apps get
 GLES 3.1 and Vulkan 1.3.
 
-- **Requirement**: the Android Emulator 37 or later from Android Studio's SDK
-  Manager (`~/Library/Android/sdk/emulator`, or
-  `defaults write dev.avo.daemon AvoAndroidEmulator <dir>`). avo-vmm loads its
-  `lib64/libgfxstream_backend.dylib` (and the ten libraries it needs) at run
-  time by absolute path; Avo never ships them. The dylibs carry Google's Team
+- **The renderer** ships in Avo.app (`Contents/Resources/gfxstream`, built
+  from source by `scripts/build-gfxstream.sh`, `make gfxstream`): gfxstream's
+  host backend at the snapshot the Android Emulator 37.1 has (emu-main-dev
+  `ec3143b`, built standalone, so it needs only the system's libraries), the
+  Khronos Vulkan loader 1.4.365 and MoltenVK 1.4.0 (the release binary), in
+  the emulator's layout (`lib64/`, `lib64/vulkan/`), its `source.properties`
+  saying `Pkg.Desc=Avo GPU renderer…` and `Pkg.Revision=avo.N`, which keys
+  the shader cache. The daemon passes it unless
+  `defaults write dev.avo.daemon AvoAndroidEmulator <dir>` names another; an
+  Android Emulator 37 or later (`~/Library/Android/sdk/emulator`) is the
+  fallback. avo-vmm loads `lib64/libgfxstream_backend.dylib` at run time by
+  absolute path, an emulator's after the ten libraries it needs (Avo never
+  ships those: Android SDK licence). The emulator's dylibs carry Google's Team
   ID, so avo-vmm is signed with `com.apple.security.cs.disable-library-validation`
   (`engine/hvf/hypervisor.entitlements`).
-- **Flags**: `--gpu gfxstream --gfxstream-dir <emulator dir>` (the daemon adds
+- **Flags**: `--gpu gfxstream --gfxstream-dir <renderer dir>` (the daemon adds
   them after `--properties`); none, or `--gpu 2d`, is the software engine bit
   for bit. `--hwc client|host` is a bring-up knob the daemon never passes.
 - **Exit 75**: the renderer could not load or initialise (within 20 s), before

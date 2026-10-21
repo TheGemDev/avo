@@ -617,8 +617,8 @@ first. Android's own figures (`statfs` of /data and /system) are kept in
 `data-disk.json` next to the data disk for the pane.
 
 Graphics › Renderer (`rendererMode`: Automatic, GPU (Metal), Software) picks
-avo-vmm's gfxstream GPU path or software rendering at the next start; GPU
-needs the Android Emulator 37+ (docs/engine.md, "GPU"). A failed GPU start
+avo-vmm's gfxstream GPU path or software rendering at the next start; the
+GPU renderer ships in Avo.app (docs/engine.md, "GPU"). A failed GPU start
 falls back to software on its own and stays there until "Try GPU Again"
 (`retryGPU`), a Renderer change, or a new avo-vmm, emulator or macOS;
 `VMStatus.renderer` says which renderer runs and why, for the pane's status
