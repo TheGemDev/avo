@@ -449,11 +449,13 @@ impl Running {
                 power.stop = Some(reason);
             }
         }
+        // Before the kick, which reaches only vCPUs in the guest: the others
+        // see this before they run again (Seat::before_run).
+        self.stopped.store(true, Ordering::SeqCst);
         self.power_changed.notify_all();
         self.waker.wake();
         let handles = self.handles.lock().unwrap().clone();
         let _ = VcpuHandle::kick_all(&handles);
-        self.stopped.store(true, Ordering::SeqCst);
         pause::GATE.wake();
     }
 
