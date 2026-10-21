@@ -451,12 +451,30 @@ driver straight from libEGL's dispatch tables, so the GLES layer swaps
 `glGetString` in those two tables on the app's first `eglMakeCurrent`
 (`guest/gpuprofile/src/gles_layer.c`).
 
-The profile's CPU (`hardware.cpu`: each cluster's MIDR and cpufreq table) is
-carried by the data model and shown in the Control Panel, but the engine does
-not present it to the guest yet — `/proc/cpuinfo` and `/sys/devices/system/cpu`
-still describe the host vCPUs. Setting the vCPU `MIDR_EL1` per cluster and
-populating the guest's `virtual-cpufreq` perf table from the profile is the
-remaining engine work for hardware emulation.
+The profile's CPU (`hardware.cpu`: each cluster's MIDR and frequencies) is
+the engine's (`--cpu-clusters`, `vmm/src/cpu.rs`). Each vCPU's `MIDR_EL1` is
+its cluster's, so `/proc/cpuinfo` and `/sys/devices/system/cpu/*/regs` name
+the phone's cores, and the guest gets `virtual-cpufreq` (the image's
+`virtual-cpufreq.ko`, a page of registers per vCPU at 0x0904_0000): every
+cluster is one cpufreq policy with the phone's range, as on the phone
+(the OnePlus 13: policy0 is cpu0–5 at 384 MHz–3.53 GHz, policy6 cpu6–7 at
+1.02–4.32 GHz). The frequencies are names only: the guest's requests are
+ignored and the current frequency reads as the top, so the scheduler's
+frequency invariance sees every vCPU at full speed, and without
+`capacity-dmips-mhz` it keeps treating the vCPUs as the equals they are.
+The daemon fits the phone to Android's cores
+(`DeviceHardware.CPU.fitted(to:)`): fewer vCPUs keep the phone's fastest
+clusters, more grow its slowest, and Android numbers them from the slowest,
+as phones do.
+
+A faked MIDR also selects the guest kernel's errata workarounds, which are
+pure cost on a Mac core. Most are for KVM, AArch32 or tracing, or cheap (the
+TLB invalidation on every return to user space for the Cortex-A510 and A520).
+Two would slow every app and are kept out: a Cortex-A73 (erratum 858921:
+the counter is trapped and `clock_gettime` leaves the vDSO) is never
+presented, and an early Cortex-A53 (errata 826319 and others: apps' cache
+maintenance is trapped) is presented as r0p4. Qualcomm's A73- and A53-based
+Kryo cores report their own parts (0x51/0x800, 0x801), as their phones do.
 
 **The host agent.** Cuttlefish has no Bridge Agent, so `HostAgent` in the
 daemon plays it over ADB (vsock 6520, root through `su` on userdebug):

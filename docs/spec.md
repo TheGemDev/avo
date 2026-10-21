@@ -299,7 +299,9 @@ membaca hardware:
   milik ANGLE); SurfaceFlinger, HWUI, WebView dan instance Vulkan milik ANGLE
   sengaja tidak disentuh agar layar tetap benar.
 - **CPU** — mesin melaporkan model inti tiap cluster (MIDR) dan frekuensinya,
-  sehingga `/proc/cpuinfo` dan `/sys/devices/system/cpu` cocok dengan target.
+  sehingga `/proc/cpuinfo` dan `/sys/devices/system/cpu` cocok dengan target
+  (satu policy cpufreq per cluster). Frekuensinya hanya nama: tiap vCPU tetap
+  berjalan secepat Mac mengizinkan.
 - Yang tetap jujur dan tak dipalsukan (mengubahnya memecah aplikasi/driver):
   `ro.hardware` dan HAL, daftar ABI, level API, dan kemampuan GPU sebenarnya.
   Aplikasi yang bercabang pada `.so`/HAL khusus-Qualcomm tetap jatuh ke jalur

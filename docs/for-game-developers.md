@@ -44,7 +44,8 @@ boot, and a device profile cannot change or remove them. Check
   Android starts with Google apps, and apps see it from the start after
   that. Avo's own Android image, in development, always declares it.
 - `Build.*` follows the device profile the user picked under Settings ›
-  System › Device profile › Identify as. The default, "Avo (AVO-Droid)", is
+  Privacy & Security › Device profile › Identify as. The default, "Avo
+  (AVO-Droid)", is
   the honest identity in the table. The other profiles impersonate phones
   (for apps that only work on certain models), so `Build.*` then names that
   phone while the `ro.boot.avo.*` properties still say Avo.
@@ -294,18 +295,18 @@ A player on Avo is almost always using a keyboard and a mouse or trackpad.
 5. Check what your game sees:
    `adb shell getprop | grep ro.boot.avo`, `adb shell pm list features | grep avo`.
 6. To see your game under a phone identity, choose a profile under Settings
-   › System › Device profile › Identify as and restart Android. Google Play
-   may keep showing the old device details until it refreshes its device
-   information.
+   › Privacy & Security › Device profile › Identify as and restart
+   Android. Google Play may keep showing the old device details until it
+   refreshes its device information.
 
 ## Testing a build's per-device code paths
 
 If your build branches on the device — a chipset check, a GPU family, a
 brand — you can test those branches on Avo without the phone. Pick a profile
-under Settings › System › Device profile and turn on **Emulate this phone's
-hardware**, then restart Android. Your app then reads that phone's SoC, CPU
-and GPU, so a path gated on "is this a Snapdragon / an Adreno / a Dimensity"
-runs as it would on the device.
+under Settings › Privacy & Security › Device profile and turn on **Emulate
+this phone's hardware**, then restart Android. Your app then reads that
+phone's SoC, CPU and GPU, so a path gated on "is this a Snapdragon / an
+Adreno / a Dimensity" runs as it would on the device.
 
 What each surface reads, so you know which checks are covered:
 
@@ -322,7 +323,10 @@ What each surface reads, so you know which checks are covered:
 - **Vulkan** — `vkGetPhysicalDeviceProperties(2)` on your app's own instance
   reports the profile's `deviceName`, `vendorID`, `driverID` and driver name.
 - **CPU** — `/proc/cpuinfo` and `/sys/devices/system/cpu` report the target's
-  cores and clocks, so the NDK's cpufeatures agrees.
+  cores (their MIDR) and clocks, a cpufreq policy per cluster as on the
+  phone, so the NDK's cpufeatures agrees. With fewer Android cores than the
+  phone has (Settings › Performance), the phone's fastest are kept. The
+  clocks are names only: your threads run at the Mac's speed on every core.
 
 What stays this Mac's, on purpose — so your app still runs and the result is
 honest:

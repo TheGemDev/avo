@@ -8,7 +8,7 @@
 //!                       [--gpu 2d|gfxstream] [--gfxstream-dir DIR] [--hwc client|host]
 //!                       [--shared-dir DIR] [--refresh-rate HZ] [--bluetooth NETSIMD]
 //!                       [--init-boot FILE] [--cellular TYPE:BARS] [--cameras LIST]
-//!                       [--no-microphone]
+//!                       [--no-microphone] [--cpu-clusters LIST]
 //!
 //! --properties names a file of key=value lines that replace the image's
 //! properties (the device profile's identity, e.g. ro.product.model).
@@ -38,6 +38,13 @@
 //! `lte:4` (modem.rs); without it there is no SIM until the control socket's
 //! `cellular` puts one in.
 //!
+//! --cpu-clusters presents a phone's CPU ("Emulate this phone's hardware";
+//! cpu.rs): `CORESxMIDR@MIN-MAX` per cluster, in kHz, as many cores as
+//! --cpus, e.g. `6x513f0011@384000-3532800,2x514f0011@1017600-4320000`.
+//! Each vCPU reports its cluster's MIDR, and each cluster is a cpufreq
+//! policy with frequencies from MIN to MAX. Without it the vCPUs report the
+//! Mac's cores and Android has no cpufreq.
+//!
 //! --no-microphone keeps the Mac's microphone from Android from the start:
 //! it records silence, and macOS never asks for the microphone, until the
 //! control socket's `microphone on` (virtio/sound.rs).
@@ -63,6 +70,7 @@ mod bluetooth;
 mod bus;
 mod camera;
 mod control;
+mod cpu;
 mod cuttlefish;
 mod disk;
 mod fdt;
@@ -88,7 +96,8 @@ use virtio::gpu::{GpuMode, Hwc};
 
 const USAGE: &str = "usage: avo-vmm cuttlefish <image dir> [--instance DIR] [--runtime DIR] [--userdata FILE] [--disks DIR] [--cpus N] [--mem MiB] \
 [--display WxH] [--density DPI] [--timeout S] [--properties FILE] [--verbose] [--gpu 2d|gfxstream] [--gfxstream-dir DIR] [--bluetooth NETSIMD] [--init-boot FILE] \
-[--hwc client|host] [--shared-dir DIR] [--refresh-rate HZ] [--cellular TYPE:BARS] [--cameras LIST] [--no-microphone] [--exit-on-reboot]";
+[--hwc client|host] [--shared-dir DIR] [--refresh-rate HZ] [--cellular TYPE:BARS] [--cameras LIST] [--no-microphone] [--cpu-clusters LIST] \
+[--exit-on-reboot]";
 
 /// `--gpu`, `--gfxstream-dir` and `--hwc` together.
 fn gpu_mode(gpu: Option<&str>, dir: Option<PathBuf>, hwc: Option<&str>) -> Result<GpuMode, String> {
@@ -125,6 +134,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
     let mut init_boot = None;
     let mut cellular = None;
     let mut cameras = None;
+    let mut cpu = None;
     let mut microphone = true;
     let mut exit_on_reboot = false;
     let mut refresh_rate = virtio::gpu::edid::DEFAULT_RATE;
@@ -158,6 +168,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
                 cellular = modem::Service::parse(&text.split(':').collect::<Vec<_>>()).map_err(|e| format!("bad --cellular: {e}"))?;
             }
             "--cameras" => cameras = Some(camera::Present::parse(&value(i)?).map_err(|e| format!("bad --cameras: {e}"))?),
+            "--cpu-clusters" => cpu = Some(cpu::Clusters::parse(&value(i)?).map_err(|e| format!("bad --cpu-clusters: {e}"))?),
             "--refresh-rate" => {
                 refresh_rate = value(i)?.parse().map_err(|_| "bad --refresh-rate")?;
                 if !virtio::gpu::edid::RATE_RANGE.contains(&refresh_rate) {
@@ -190,13 +201,18 @@ fn parse(args: &[String]) -> Result<Options, String> {
     }
     let images = images.ok_or(USAGE)?;
     let gpu = gpu_mode(gpu.as_deref(), gfxstream_dir, hwc.as_deref())?;
+    if let Some(clusters) = &cpu {
+        if clusters.cores() != cpus {
+            return Err(format!("--cpu-clusters has {} cores for --cpus {cpus}", clusters.cores()));
+        }
+    }
     let instance = instance.unwrap_or_else(|| images.with_file_name("instance"));
     let runtime = runtime.unwrap_or_else(|| instance.clone());
     let disks = disks.unwrap_or_else(|| instance.clone());
     std::fs::create_dir_all(&runtime).map_err(|e| format!("{}: {e}", runtime.display()))?;
     Ok(Options {
         images, instance, disks, runtime, userdata, cpus, memory_mib, display, density, timeout, verbose, properties, gpu, shared_dir,
-        bluetooth, init_boot, cellular, cameras, microphone, exit_on_reboot, refresh_rate,
+        bluetooth, init_boot, cellular, cameras, cpu, microphone, exit_on_reboot, refresh_rate,
     })
 }
 
@@ -267,6 +283,12 @@ mod tests {
         assert_eq!(options.cameras, None);
         let fed = parse(&args(&["--cameras", "back"])).unwrap().cameras;
         assert_eq!(fed, Some(camera::Present([true, false])));
+        // The Mac's cores unless a phone's are asked for, as many as --cpus.
+        assert_eq!(options.cpu, None);
+        let phone = parse(&args(&["--cpus", "8", "--cpu-clusters", "6x513f0011@384000-3532800,2x514f0011@1017600-4320000"])).unwrap();
+        assert_eq!(phone.cpu.map(|clusters| clusters.cores()), Some(8));
+        assert!(parse(&args(&["--cpu-clusters", "6x513f0011@384000-3532800,2x514f0011@1017600-4320000"])).is_err(), "8 cores, 4 vCPUs");
+        assert!(parse(&args(&["--cpu-clusters", "4x513f0011"])).is_err());
         let _ = std::fs::remove_dir_all(&root);
     }
 

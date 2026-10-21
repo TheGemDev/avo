@@ -3,6 +3,7 @@
 
 use crate::bluetooth::Bluetooth;
 use crate::camera;
+use crate::cpu;
 use crate::gnss::Gnss;
 use crate::android;
 use crate::control::{self, Controls, TOUCH_RANGE};
@@ -71,6 +72,8 @@ pub struct Options {
     /// Cameras the daemon feeds (virtio/media.rs) instead of the image's
     /// emulated ones; `None`: the emulated ones.
     pub cameras: Option<camera::Present>,
+    /// A phone's CPU for the vCPUs (`--cpu-clusters`; cpu.rs); `None`: the Mac's.
+    pub cpu: Option<cpu::Clusters>,
     /// Android may use the Mac's microphone (`--no-microphone`: not until
     /// the control socket allows it; virtio/sound.rs).
     pub microphone: bool,
@@ -508,6 +511,9 @@ fn boot(options: &Options, renderer: Option<&RenderHost>, bluetooth: Option<&Arc
         }))
     };
     let mut machine = Machine::new(options.cpus, options.memory_mib, kernel_log(&kernel_file)?)?;
+    if let Some(clusters) = &options.cpu {
+        machine.present_cpu(clusters.clone())?;
+    }
 
     let disk = composite_disk(options)?;
     if options.verbose {

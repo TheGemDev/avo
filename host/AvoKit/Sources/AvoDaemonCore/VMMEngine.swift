@@ -141,6 +141,16 @@ public final class VMMEngine: VMEngine, @unchecked Sendable {
                 + (initBoot.map { ["--init-boot", $0.path] } ?? [])
                 + config.cameraFlags
                 + (config.microphoneEnabled ? [] : ["--no-microphone"])
+                + cpuFlags(launch)
+    }
+
+    /// "Emulate this phone's hardware": the profile's CPU for Android's
+    /// cores (`DeviceHardware.CPU.fitted(to:)`), as avo-vmm presents it: each
+    /// vCPU's MIDR and a cpufreq policy per cluster. Otherwise the Mac's cores.
+    static func cpuFlags(_ launch: EngineLaunch) -> [String] {
+        guard launch.config.emulateHardware, let cpu = launch.profile?.hardware?.cpu,
+              let clusters = cpu.engineClusters(vcpus: launch.config.cpuCount) else { return [] }
+        return ["--cpu-clusters", clusters]
     }
 
     /// Display 0's refresh rate, which every app display gets too (HostAgent):

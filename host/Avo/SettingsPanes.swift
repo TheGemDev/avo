@@ -437,7 +437,7 @@ struct SystemPane: View {
                         }
                     }
                     if config.emulateHardware, let hardware = profile.hardware {
-                        DeviceSpecCard(hardware: hardware, display: profile.display)
+                        DeviceSpecCard(hardware: hardware, display: profile.display, vcpus: config.cpuCount)
                     }
                 }
             }
