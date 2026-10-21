@@ -120,10 +120,20 @@ final class ControlLocationEngine: LocationEngine, @unchecked Sendable {
             // A route plays from where it is chosen: the place before it is kept.
             _ = try await center.change(.route(Self.route, LocationPlayback(pace: .walk)))
         }
-        let next = LocationCenter(engine: nil, store: store)
+        let engine = RecordingLocationEngine()
+        let next = LocationCenter(engine: engine, store: store)
         #expect(await next.status().pointName == "Jakarta")
         #expect(await next.status(for: "id.suruhkami").pointName == "Pontianak")
         #expect(await next.status(for: "id.suruhkami").ownLocation == true)
+        // The engine has every app's place before Android starts (it reported
+        // its own built-in place until something changed).
+        await next.restore()
+        let sent = try #require(engine.last ?? nil)
+        #expect(abs(sent.latitude - Self.jakarta.latitude) < 1e-9 && abs(sent.longitude - Self.jakarta.longitude) < 1e-9)
+        // This Mac's location is not restored: CoreLocation sends it.
+        let mac = RecordingLocationEngine()
+        await LocationCenter(engine: mac).restore()
+        #expect(mac.fixes.isEmpty)
     }
 
     @Test func aRouteMovesOnlyWhileAndroidRuns() async throws {

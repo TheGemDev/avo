@@ -115,6 +115,14 @@ actor LocationCenter {
 
     // MARK: What it hears
 
+    /// The daemon started: a place kept from before goes to the engine, which
+    /// keeps it for Android's start (this Mac's location comes when
+    /// CoreLocation has one; routes are not kept).
+    func restore() async {
+        guard case .point = current else { return }
+        await sendFix()
+    }
+
     /// From CoreLocation (nil: unknown, not shared, or Android stopped).
     func macLocationChanged(_ fix: LocationFix?) async {
         macFix = fix
@@ -379,6 +387,8 @@ extension DaemonCore {
     /// change on to the panels that watch.
     func startLocation() {
         let location = self.location
+        // The place kept from before is where Android is from its start on.
+        Task { await location.restore() }
         Task { [weak self] in
             for await _ in location.updates { await self?.sendLocation() }
         }
