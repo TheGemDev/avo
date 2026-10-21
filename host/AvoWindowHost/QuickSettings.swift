@@ -257,7 +257,7 @@ struct QuickSettingsView: View {
                 .padding(.horizontal, 4)
                 .padding(.bottom, 2)
                 QuickGraphicsCard(model: model)
-                QuickCard(title: L("Performance HUD"), scope: L("This window")) {
+                QuickGroup(id: "hud", title: L("Performance HUD"), scope: L("This window"), summary: Self.hudName(state.hudLevel)) {
                     QuickSegmented(label: L("Performance HUD"),
                                    options: [(PerformanceHUDLevel.off, L("Off")), (.fps, L("FPS Only")), (.detailed, L("Detailed"))],
                                    selection: state.hudLevel, fill: true) { level in
@@ -265,7 +265,7 @@ struct QuickSettingsView: View {
                     }
                 }
                 if let keys = state.keyMapping { keyMappingCard(keys) }
-                QuickCard(title: L("Scrolling"), scope: L("This app")) {
+                QuickGroup(id: "scrolling", title: L("Scrolling"), scope: L("This app"), summary: ScrollModeMenu.name(of: state.scrollMode)) {
                     QuickSegmented(label: L("Scrolling"), options: ScrollMode.allCases.map { ($0, ScrollModeMenu.name(of: $0)) },
                                    selection: state.scrollMode, fill: true, help: { ScrollModeMenu.explanation(of: $0) }) { mode in
                         model.setScrollMode(mode)
@@ -285,9 +285,18 @@ struct QuickSettingsView: View {
         .environment(\.colorScheme, .dark)
     }
 
+    private static func hudName(_ level: PerformanceHUDLevel) -> String {
+        switch level {
+        case .off: L("Off")
+        case .fps: L("FPS Only")
+        case .detailed: L("Detailed")
+        }
+    }
+
     private func keyMappingCard(_ keys: QuickSettingsState.KeyMapping) -> some View {
         let percent = Text(keys.hintsOpacity, format: .percent.precision(.fractionLength(0)))
-        return QuickCard(title: L("Key mapping"), scope: L("This app")) {
+        return QuickGroup(id: "keyMapping", title: L("Key mapping"), scope: L("This app"),
+                          summary: keys.gameMode ? L("Game Mode") : L("Off")) {
             QuickToggle(label: L("Game Mode"), shortcut: "⌘G", caption: L("Keys and clicks become touches"), isOn: keys.gameMode) { on in
                 model.change { $0.quickSettingsSetGameMode(on) }
             }
@@ -314,7 +323,7 @@ struct QuickSettingsView: View {
     }
 
     private func translationCard(_ state: QuickSettingsState) -> some View {
-        QuickCard(title: L("Translation"), scope: L("This window")) {
+        QuickGroup(id: "translation", title: L("Translation"), scope: L("This window"), summary: state.translating ? targetTitle : L("Off")) {
             QuickToggle(label: L("Translate screen"), shortcut: "⌘⇧T", isOn: state.translating) { on in
                 model.change { $0.quickSettingsSetTranslating(on) }
             }
@@ -337,7 +346,8 @@ private struct QuickGraphicsCard: View {
     var body: some View {
         let state = model.state
         let settings = state.graphics.settings
-        QuickCard(title: L("Graphics"), scope: L("This app")) {
+        QuickGroup(id: "graphics", title: L("Graphics"), scope: L("This app"),
+                   summary: "\(state.graphics.profile == .games ? L("Games") : L("Apps")) · \(state.fpsLimit) fps") {
             QuickRow(label: L("Profile")) {
                 QuickSegmented(label: L("Profile"), options: [(GraphicsProfile.apps, L("Apps")), (.games, L("Games"))],
                                selection: state.graphics.profile, fill: true) { choice in
@@ -584,6 +594,61 @@ enum QuickHaze {
 
     private static func tag(_ name: String) -> Int {
         name.utf8.reduce(0) { $0 << 8 | Int($1) }
+    }
+}
+
+/// A card of Quick Settings that folds, so the overlay opens short: its
+/// title and what it is set to; opened, its settings. Each app's windows
+/// remember which are open.
+struct QuickGroup<Content: View>: View {
+    let title: String
+    let scope: String
+    /// What it is set to, shown while it is folded.
+    let summary: String
+    let content: Content
+    @AppStorage private var isOpen: Bool
+
+    init(id: String, title: String, scope: String, summary: String = "", @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.scope = scope
+        self.summary = summary
+        self.content = content()
+        _isOpen = AppStorage(wrappedValue: false, "QuickSettingsOpen.\(id)")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Button {
+                withAnimation(.snappy(duration: 0.22)) { isOpen.toggle() }
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(QuickHaze.textTertiary)
+                        .rotationEffect(.degrees(isOpen ? 90 : 0))
+                    Text(verbatim: title)
+                        .font(QuickHaze.hubot(13.5, 650))
+                        .foregroundStyle(QuickHaze.text)
+                    Spacer(minLength: 8)
+                    Text(verbatim: isOpen || summary.isEmpty ? scope : summary)
+                        .font(QuickHaze.mona(11, 500))
+                        .foregroundStyle(QuickHaze.sectionLabel)
+                        .lineLimit(1)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityValue(isOpen ? L("Open") : summary)
+            if isOpen {
+                content.transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .padding(11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(QuickHaze.card, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .accessibilityElement(children: .contain)
     }
 }
 

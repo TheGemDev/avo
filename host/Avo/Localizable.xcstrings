@@ -7399,12 +7399,32 @@
         }
       }
     },
+    "Phone" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponsel"
+          }
+        }
+      }
+    },
     "Phone status" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Status telepon"
+          }
+        }
+      }
+    },
+    "Phone: the app’s screen with rounded corners, and its title bar shows above it only while the pointer is over the window. Standard: a Mac window with its title bar always shown. Open windows change right away." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponsel: layar aplikasi dengan sudut membulat, dan bilah judulnya muncul di atasnya hanya saat penunjuk berada di atas jendela. Standar: jendela Mac dengan bilah judul yang selalu tampil. Jendela yang terbuka langsung berubah."
           }
         }
       }
@@ -8671,6 +8691,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kecepatan"
+          }
+        }
+      }
+    },
+    "Standard" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standar"
           }
         }
       }
@@ -10373,6 +10403,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Jendela terbuka"
+          }
+        }
+      }
+    },
+    "Window style" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gaya jendela"
           }
         }
       }

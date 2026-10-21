@@ -1233,7 +1233,7 @@ struct QuickLocationCard: View {
 
     var body: some View {
         let status = model.status
-        QuickCard(title: L("Location"), scope: L("Every app")) {
+        QuickGroup(id: "location", title: L("Location"), scope: L("Every app"), summary: LocationSummary.title(status)) {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: status?.source == .route ? "point.topleft.down.to.point.bottomright.curvepath"
                       : status?.source == .point ? "mappin" : "location.fill")

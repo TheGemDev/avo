@@ -1,6 +1,15 @@
 import CoreGraphics
 import Foundation
 
+/// How app windows look (Settings › Display › App windows › Window style).
+public enum WindowStyle: String, Codable, CaseIterable, Sendable {
+    /// The app's screen with rounded corners, as a phone's: the title bar
+    /// above it shows while the pointer is over the window.
+    case phone
+    /// A Mac window, its title bar always shown.
+    case standard
+}
+
 /// Picture in Picture for an app window: the app in a small borderless
 /// window over every other, in a corner of the screen, with the picture's
 /// shape. The Window Host moves the window's content into it; this is where

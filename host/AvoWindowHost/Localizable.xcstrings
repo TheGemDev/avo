@@ -2923,6 +2923,16 @@
         }
       }
     },
+    "Open" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terbuka"
+          }
+        }
+      }
+    },
     "Open Location…" : {
       "localizations" : {
         "id" : {

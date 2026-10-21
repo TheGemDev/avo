@@ -343,6 +343,14 @@ struct GraphicsPane: View {
                     HelpTitle("Default window size", help: "The size of an app’s first window, turned to the orientation under Resolution and Scaling; no restart needed. After that, each app’s window opens where and as big as you left it.")
                 }
                 IssueText(field: "defaultWindowSize")
+                LabeledContent {
+                    HazePicker("Window style", selection: Binding(get: { config.windowStyle }, set: { value in model.update { $0.windowStyle = value } })) {
+                        Text("Phone").tag(WindowStyle.phone)
+                        Text("Standard").tag(WindowStyle.standard)
+                    }
+                } label: {
+                    HelpTitle("Window style", help: "Phone: the app’s screen with rounded corners, and its title bar shows above it only while the pointer is over the window. Standard: a Mac window with its title bar always shown. Open windows change right away.")
+                }
             } header: {
                 Text("App windows")
             }

@@ -139,6 +139,7 @@ let macMini8 = HostInfo(physicalMemoryBytes: 8 << 30, performanceCores: 4, effic
         #expect(effect { $0.performanceHUD = .fps } == .immediate)
         #expect(effect { $0.appGraphics.orientation = .landscape } == .immediate)
         #expect(effect { $0.defaultWindowSize = .init(width: 500, height: 900) } == .newWindows) // App windows: no restart
+        #expect(effect { $0.windowStyle = .standard } == .immediate) // open windows change their looks
         #expect(effect { $0.rooted = true } == .restartRequired)             // Sistem
         #expect(effect { $0.deviceProfileID = "xiaomi-14" } == .restartRequired)
         #expect(effect { $0.createDesktopAlias.toggle() } == .immediate)
@@ -232,6 +233,18 @@ let macMini8 = HostInfo(physicalMemoryBytes: 8 << 30, performanceCores: 4, effic
     }
 
     // MARK: Renderer
+
+    /// Windows are phone-style unless the user chose Standard, also in a file
+    /// from before the setting.
+    @Test func windowStyleDefaultsToPhone() throws {
+        #expect(VMConfig().windowStyle == .phone)
+        let old = try JSONDecoder().decode(VMConfig.self, from: Data(#"{"memoryMiB": 6144}"#.utf8))
+        #expect(old.windowStyle == .phone)
+        var standard = VMConfig()
+        standard.windowStyle = .standard
+        let saved = try JSONDecoder().decode(VMConfig.self, from: JSONEncoder().encode(standard))
+        #expect(saved.windowStyle == .standard)
+    }
 
     @Test func rendererModeDefaultsToAutomatic() throws {
         #expect(VMConfig().rendererMode == .auto)

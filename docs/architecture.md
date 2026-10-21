@@ -236,6 +236,39 @@ minute after its last use). A pair macOS must download first, and every pair
 on macOS 15, is translated in the window instead, by a SwiftUI translation
 session, which can show the system's download sheet.
 
+Window style (Settings › Display › App windows, `VMConfig.windowStyle`): in
+the phone style (the default) the window shows the app's screen alone, with a
+phone's rounded corners (7.5% of its shorter side, 12 to 32 points). As the
+pointer leaves the screen through its top, a frame grows out around it, as
+iPhone Mirroring's (`WindowChrome`): an 8-point border on every side and, at
+the top, a header with a Mac window's corners where the traffic lights, the
+title and the title bar's buttons fade in once it has made room. It shrinks
+back behind the screen 0.5 s after the pointer moves down into the app or
+away, unless a menu of the header's or Quick Settings is open; a new window
+shows it for a moment. The frame is two Core Animation layers of one color
+(the bottom with the phone's corners, the top with the header's), moved with
+explicit animations; their implicit ones are off, since a layout pass runs
+inside Core Animation's commit. The window's shadow is worked out again each
+frame while they move. Around the shrunk frame the window is see-through and
+lets clicks through; above it the pointer is over other windows, so a
+global monitor of its moves (only while the header is hidden) notices it go
+out through the top.
+
+The window's frame keeps its size either way, room for the frame and the
+header included, so nothing re-plugs Android's display for it. The window has
+a see-through title bar over a full-size content view;
+`WindowChrome.screenInsets` says where the screen is in it, and every size
+the window controller works out (Android's display, the default size, shape
+locks, rotation) is the screen's: a locked shape is kept in
+`windowWillResize`, since AppKit's aspect lock would include the frame. The
+title bar's own view fades, not its container: AppKit sets the container's
+alpha again as the window comes to the front. While recording, the badge over
+the screen shows it, as in full screen. Full screen and Picture in Picture
+keep their own looks (Picture in Picture takes the screen, not the frame);
+Standard is a Mac window with its title bar always shown. Open windows change
+at once, keeping their screen's size. The header has no translate button:
+View › Translate Screen and ⌘⇧T turn it on.
+
 Keep on Top floats every window of the app over other apps' windows
 (`window.level = .floating`; not in full screen), remembered per app in the
 shim's defaults (`WindowModeSettings`). Picture in Picture moves the window's
@@ -255,11 +288,12 @@ it opens once full screen has ended.
 
 The title bar's last button opens Quick Settings (`QuickSettings.swift`), a
 transient popover in the Library's haze look with only the settings whose
-effect shows at once: this app's graphics (profile, resolution or follow
+effect shows at once, in groups that fold (`QuickGroup`: closed, a group shows
+what it is set to; each app's windows remember which are open): this app's graphics (profile, resolution or follow
 window with its render scale, MetalFX, sharpness), Android's frame rate cap
 (for every app), the performance HUD, Game Mode and the key hints when the
 app has a key mapping, the scroll mode, and Translate Screen with Translate
-Into. Graphics save through `setAppGraphics`, which a shim may call only for
+Into, and Location. Graphics save through `setAppGraphics`, which a shim may call only for
 the package it said hello as; the frame rate cap saves through
 `setFrameRateLimit`, which changes nothing else (a cap that needs another
 display rate says Android runs at it after a restart). Everything that

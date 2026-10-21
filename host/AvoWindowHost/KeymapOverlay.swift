@@ -10,6 +10,8 @@ import AvoKeymap
 final class KeymapOverlay {
     private let editor: KeymapEditorView
     private weak var window: NSWindow?
+    /// The app's screen, which the editor covers.
+    private weak var screen: NSView?
     private weak var focusBefore: NSResponder?
     var onClose: (() -> Void)?
 
@@ -21,11 +23,13 @@ final class KeymapOverlay {
                                   profile: profile ?? KeymapProfile(package: package, name: String(localized: "My layout", bundle: .windowHost), controls: []),
                                   onSave: onSave)
         self.window = window
+        screen = view.superview
         editor.onClose = { [weak self] in self?.close() }
     }
 
     func show() {
-        guard let window, let content = window.contentView, !isEditing else { return }
+        // Over the app's screen, not the window's frame around it.
+        guard let window, let content = screen ?? window.contentView, !isEditing else { return }
         editor.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(editor, positioned: .above, relativeTo: nil)
         NSLayoutConstraint.activate([

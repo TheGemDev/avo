@@ -54,13 +54,14 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// Game Mode, Edit Key Mapping and the key hints (filled while Game Mode is on).
     private let gameModeButton = TitlebarButton(symbol: "gamecontroller", label: String(localized: "Game Controls", bundle: .windowHost),
                                                 action: nil)
-    /// Translate Screen and Translate Into.
+    /// Translate Screen's state for ScreenTranslationController. Not in the
+    /// title bar: View › Translate Screen and ⌘⇧T turn it on.
     private let translateButton = TitlebarButton(symbol: "translate", label: String(localized: "Translate Screen (⌘⇧T)", bundle: .windowHost),
                                                  action: nil)
     /// Take Screenshot, Record Screen and their folders (red while recording).
     private let captureButton = TitlebarButton(symbol: "camera", label: String(localized: "Screenshot and Screen Recording", bundle: .windowHost),
                                                action: nil)
-    private var titlebarActions: [TitlebarButton] { [backButton, gameModeButton, translateButton, captureButton] }
+    private var titlebarActions: [TitlebarButton] { [backButton, gameModeButton, captureButton] }
     /// Keep on Top (also View › Keep on Top): a pin, filled while this app's
     /// windows float over other apps'. Not one of `titlebarActions`: it works
     /// without the display.
@@ -91,6 +92,10 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let recordingBadge = RecordingIndicator(plate: true)
     /// Picture in Picture while it is on (PictureInPictureWindow.swift).
     private var picture: PictureInPictureWindow?
+    /// The window's looks: a phone-style frame with its header on hover, or a Mac window (WindowChrome.swift).
+    private var chrome: WindowChrome?
+    /// The app's screen: Android's display and what goes over it.
+    private var screenView: NSView?
     /// Picture in Picture was chosen in full screen: it opens once full screen has ended.
     private var pictureAfterFullScreen = false
     /// Record Android's Sound, for every app (CaptureSettings).
@@ -98,15 +103,14 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// Keep on Top and where Picture in Picture goes, for this app (WindowModeSettings).
     static let windowModes = WindowModeSettings(store: .standard)
 
-    /// Back, then three icons that open menus of related actions (the same
-    /// as the menu bar's): game controls, translation and capture; then the
+    /// Back, then two icons that open menus of related actions (the same
+    /// as the menu bar's): game controls and capture; then the
     /// fingerprint, whose menu has no menu bar counterpart, Keep on Top, and
     /// last Quick Settings.
     private lazy var titlebarButtons: NSTitlebarAccessoryViewController = {
         backButton.target = self
         keepOnTopButton.target = self
         gameModeButton.popUpMenu = { [weak self] in self?.gameControlsMenu() }
-        translateButton.popUpMenu = { [weak self] in self?.translationMenu() }
         captureButton.popUpMenu = { [weak self] in self?.captureMenu() }
         let stack = NSStackView(views: titlebarActions + [fingerprintMenu.button, keepOnTopButton, quickSettings.button])
         stack.orientation = .horizontal
@@ -142,14 +146,6 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         // How the mouse wheel scrolls this app (WheelScrolling.swift).
         menu.addItem(.separator())
         menu.addItem(ScrollModeMenu.shared.makeItem())
-        return menu
-    }
-
-    /// Translate Screen and Translate Into, as in the View menu.
-    private func translationMenu() -> NSMenu? {
-        let menu = ScreenTranslationMenu.shared.makeViewMenuItem().submenu
-        // Straight to this window, also before it becomes key.
-        for item in menu?.items ?? [] where item.action == #selector(toggleScreenTranslation) { item.target = self }
         return menu
     }
 
@@ -272,7 +268,12 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
             lockOverlay.topAnchor.constraint(equalTo: container.topAnchor),
             lockOverlay.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
-        window.contentView = container
+        // The window's content is the chrome's frame, with the screen in it.
+        let chrome = WindowChrome(window: window)
+        chrome.keepsBar = { [weak self] in self?.quickSettings.isShown == true }
+        self.chrome = chrome
+        screenView = container
+        chrome.attach(container)
         window.addTitlebarAccessoryViewController(titlebarButtons)
         window.addTitlebarAccessoryViewController(recordingAccessory)
         // The accessory's own isHidden does not hide it in the title bar
@@ -280,6 +281,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         // view does. showRecording(_:) sets both.
         recordingAccessory.isHidden = true
         recordingIndicator.isHidden = true
+        chrome.apply(config.windowStyle)
         placeholder.show(icon: NSApp.applicationIconImage, message: String(localized: "Starting \(app.label)…", bundle: .windowHost), busy: true)
         displayView.onDropFiles = { [weak self] urls in self?.share(urls) }
         // The wheel's swipes are in dp: Android's density for the display.
@@ -289,11 +291,15 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
 
         // Remember each app's window frame separately; offset extra windows.
         window.setFrameAutosaveName("AvoWindow-\(app.package)")
-        if window.frame.origin == .zero { window.center() }
+        if window.frame.origin == .zero {
+            // A first window: the default size is the screen's, the frame goes around it.
+            setContentSize(NSSize(width: size.width, height: size.height))
+            window.center()
+        }
 
         // A locked shape opens in the app's orientation (a restored frame
         // keeps its size and place); a free window opens as it was left.
-        let content = window.contentLayoutRect.size
+        let content = screenSize
         fixedLandscape = lockedRatio != nil ? orientation == .landscape : content.width > content.height
         applyWindowConstraints()
         renderer.setOptions(renderOptions)
@@ -302,6 +308,52 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         applyHUDLevel()
         applyWindowLevel()
         frameRateHint.setCap(app.config.fpsLimit)
+        showRecordingBadge()
+    }
+
+    /// The app's screen in the window, which Android's display is sized
+    /// from: the window without its title bar and, in the phone style, its frame.
+    private var screenSize: NSSize {
+        guard let window else { return .zero }
+        return screenSize(inFrame: window.frame.size)
+    }
+
+    private func screenSize(inFrame size: NSSize) -> NSSize {
+        let insets = chrome?.screenInsets ?? NSEdgeInsets()
+        return NSSize(width: size.width - insets.left - insets.right, height: size.height - insets.top - insets.bottom)
+    }
+
+    /// The window's size around a screen of `size`.
+    private func frameSize(forScreen size: NSSize) -> NSSize {
+        let insets = chrome?.screenInsets ?? NSEdgeInsets()
+        return NSSize(width: size.width + insets.left + insets.right, height: size.height + insets.top + insets.bottom)
+    }
+
+    /// Locks the screen to a shape: AppKit's lock for a Mac window; a
+    /// phone-style frame is not the screen's shape, so `windowWillResize`
+    /// keeps the screen's there.
+    private func lockAspect(_ ratio: Double) {
+        guard let window else { return }
+        if chrome?.style == .phone {
+            // Setting increments ends AppKit's lock.
+            window.contentResizeIncrements = NSSize(width: 1, height: 1)
+        } else {
+            window.contentAspectRatio = fixedLandscape ? NSSize(width: ratio, height: 1) : NSSize(width: 1, height: ratio)
+        }
+    }
+
+    func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+        guard chrome?.style == .phone, let ratio = lockedRatio, !sender.styleMask.contains(.fullScreen) else { return frameSize }
+        var screen = screenSize(inFrame: frameSize)
+        let current = screenSize
+        let wide = fixedLandscape ? ratio : 1 / ratio
+        // The side the drag moves more leads.
+        if abs(screen.width - current.width) >= abs(screen.height - current.height) {
+            screen.height = screen.width / wide
+        } else {
+            screen.width = screen.height * wide
+        }
+        return self.frameSize(forScreen: screen)
     }
 
     @available(*, unavailable)
@@ -426,7 +478,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// following the window, the fixed resolution, or the phone's screen.
     private func currentRequest() -> DisplayRequest {
         guard let window else { return DisplayRequest(width: 1080, height: 2336, dpi: 320) }
-        let content = window.contentLayoutRect.size
+        let content = screenSize
         return DisplaySizing.request(contentWidth: content.width, contentHeight: content.height,
                                      backingScale: window.backingScaleFactor, settings: graphics.settings, device: deviceDisplay,
                                      landscape: lockedRatio != nil ? fixedLandscape : nil)
@@ -441,9 +493,11 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     func windowDidResize(_ notification: Notification) {
         // A free window's shape is where a later fixed ratio starts; only
         // rotating turns a fixed one.
-        if let content = window?.contentLayoutRect.size, lockedRatio == nil {
+        if window != nil, lockedRatio == nil {
+            let content = screenSize
             fixedLandscape = content.width > content.height
         }
+        chrome?.windowResized()
         // Android re-plugs the display for a new size: once, when the drag ends.
         guard window?.inLiveResize != true, !fullScreenTransition else { return }
         scheduleResize(delay: .milliseconds(250))
@@ -487,7 +541,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         let quiet = quietNextSwitch
         quietNextSwitch = false
         let proposed = currentRequest()
-        let content = window.contentLayoutRect.size
+        let content = screenSize
         let renderer = displayView.renderer
         // A locked shape is the setting's, not the window's: in full screen
         // or a tile the window may still have the old ratio's shape, and
@@ -635,6 +689,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     func windowWillEnterFullScreen(_ notification: Notification) {
+        chrome?.fullScreen = true
         fullScreenTransitionBegan()
         // The scaler for the full-screen size is built during the animation,
         // so the first frame after it is upscaled already.
@@ -662,10 +717,12 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     func windowDidExitFullScreen(_ notification: Notification) {
         fullScreenTransitionEnded()
         NSApp.presentationOptions = []
+        chrome?.fullScreen = false
     }
 
     func windowDidFailToEnterFullScreen(_ window: NSWindow) {
         fullScreenTransitionEnded()
+        chrome?.fullScreen = false
     }
 
     func windowDidFailToExitFullScreen(_ window: NSWindow) {
@@ -694,9 +751,11 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     func windowDidBecomeKey(_ notification: Notification) {
         becameKey()
+        chrome?.windowStateChanged()
     }
 
     func windowDidResignKey(_ notification: Notification) {
+        chrome?.windowStateChanged()
         // Never keep keys or the pointer captured after focus leaves the game.
         keymap?.focusLost()
         GamepadForwarder.shared.resign(self)
@@ -733,8 +792,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     // MARK: Orientation
 
     func applyOrientation(_ orientation: DisplayOrientation) {
-        guard let window else { return }
-        let size = window.contentLayoutRect.size
+        guard window != nil else { return }
+        let size = screenSize
         let wantsLandscape: Bool
         switch orientation {
         case .landscape, .reverseLandscape: wantsLandscape = true
@@ -755,13 +814,13 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
                 scheduleResize(delay: .zero)
                 return
             }
-            window.contentAspectRatio = fixedLandscape ? NSSize(width: ratio, height: 1) : NSSize(width: 1, height: ratio)
+            lockAspect(ratio)
         }
-        let content = window.contentLayoutRect.size
-        let frame = window.frameRect(forContentRect: NSRect(origin: .zero, size: NSSize(width: content.height, height: content.width)))
+        let content = screenSize
+        let size = frameSize(forScreen: NSSize(width: content.height, height: content.width))
         var origin = window.frame.origin
-        origin.y += window.frame.height - frame.height // keep the title bar in place
-        window.setFrame(NSRect(origin: origin, size: frame.size), display: true, animate: true)
+        origin.y += window.frame.height - size.height // keep the title bar in place
+        window.setFrame(NSRect(origin: origin, size: size), display: true, animate: true)
     }
 
     @objc func sendBack() {
@@ -927,9 +986,11 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     /// In full screen the title bar, and the indicator in it, hides until the
-    /// pointer reaches the top: the badge over the game shows the recording.
+    /// pointer reaches the top, and a phone-style window's until it is over
+    /// the window: the badge over the game shows the recording.
     private func showRecordingBadge() {
-        recordingBadge.isHidden = recorder == nil || window?.styleMask.contains(.fullScreen) != true
+        let barHides = window?.styleMask.contains(.fullScreen) == true || chrome?.style == .phone
+        recordingBadge.isHidden = recorder == nil || !barHides
     }
 
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
@@ -1002,7 +1063,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// window waits ordered out. Android's display keeps its size (the
     /// picture is scaled down); a rotation re-plugs it as in the window.
     private func enterPictureInPicture() {
-        guard let window, picture == nil, let content = window.contentView else { return }
+        guard let window, picture == nil, let content = screenView else { return }
         if window.styleMask.contains(.fullScreen) {
             pictureAfterFullScreen = true
             window.toggleFullScreen(nil)
@@ -1012,7 +1073,10 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         keymap?.focusLost()
         let size = lastSent.map { CGSize(width: Int($0.width), height: Int($0.height)) } ?? displayView.renderer.frameSize ?? content.bounds.size
         // Out of the window first: the window would take it back out of the panel.
-        window.contentView = NSView()
+        chrome?.pictureInPicture = true
+        chrome?.detachScreen()
+        content.layer?.cornerRadius = 0
+        content.layer?.borderWidth = 0
         let picture = PictureInPictureWindow(content: content, aspect: size.width / max(size.height, 1), screen: window.screen,
                                              settings: Self.windowModes)
         // The menus' actions reach this window from the panel.
@@ -1044,7 +1108,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     private func leavePictureInPicture(show: Bool) {
         guard let window, let picture else { return }
         self.picture = nil
-        if let content = picture.takeContent() { window.contentView = content }
+        if let content = picture.takeContent() { chrome?.attach(content) }
+        chrome?.pictureInPicture = false
         window.makeFirstResponder(lockOverlay.isShowing ? lockOverlay.focusTarget : displayView)
         guard show else { return }
         window.makeKeyAndOrderFront(nil)
@@ -1092,9 +1157,9 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     private func applyWindowConstraints() {
         guard let window, !window.styleMask.contains(.fullScreen) else { return }
         let settings = graphics.settings
-        let content = window.contentLayoutRect.size
+        let content = screenSize
         if let ratio = lockedRatio {
-            window.contentAspectRatio = fixedLandscape ? NSSize(width: ratio, height: 1) : NSSize(width: 1, height: ratio)
+            lockAspect(ratio)
             let long = max(content.width, content.height)
             setContentSize(fixedLandscape ? NSSize(width: long, height: long / ratio) : NSSize(width: long / ratio, height: long))
             return
@@ -1118,13 +1183,13 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         var size = wanted
         let visible = window.screen?.visibleFrame
         if let visible {
-            let room = window.contentRect(forFrameRect: visible).size
+            let room = screenSize(inFrame: visible.size)
             let k = min(1, room.width / size.width, room.height / size.height)
             size = NSSize(width: size.width * k, height: size.height * k)
         }
-        let current = window.contentLayoutRect.size
+        let current = screenSize
         guard abs(size.width - current.width) > 0.01 || abs(size.height - current.height) > 0.01 else { return }
-        var frame = window.frameRect(forContentRect: NSRect(origin: .zero, size: size))
+        var frame = NSRect(origin: .zero, size: frameSize(forScreen: size))
         frame.origin = NSPoint(x: window.frame.minX, y: window.frame.maxY - frame.height)
         if let visible {
             frame.origin.x = max(min(frame.minX, visible.maxX - frame.width), visible.minX)
@@ -1145,6 +1210,16 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
             applyHUDLevel()
         }
         if old.fpsLimit != app.config.fpsLimit { frameRateHint.setCap(app.config.fpsLimit) }
+        if old.windowStyle != app.config.windowStyle {
+            // The screen keeps its size; the window grows or shrinks around it.
+            let screen = screenSize
+            chrome?.apply(app.config.windowStyle)
+            if window?.styleMask.contains(.fullScreen) == false {
+                setContentSize(screen)
+                applyWindowConstraints()
+            }
+            showRecordingBadge()
+        }
         let before = old.graphics(for: app.package, hasKeyMapping: hasKeyMapping)
         // The phone's screen is the device profile's: choosing another one changes it.
         let phoneChanged = old.deviceDisplay(in: app.profiles) != deviceDisplay
