@@ -342,7 +342,10 @@ final class KeymapEditorView: NSView {
         let room = max(bounds.width - 2 * Self.panelMargin, ControllerPanelModel.minWidth)
         if abs(controllerPanel.maxWidth - room) > 0.5 { controllerPanel.maxWidth = room }
         super.layout()
-        placePanel()
+        // The panel's place needs its size, known only now. A place set after
+        // the layout waits for the next pass, so lay out again: else a panel
+        // just opened stays in the top left corner until it is dragged.
+        if placePanel() { super.layout() }
     }
 
     private func showHintSettings() {
@@ -1200,6 +1203,8 @@ final class KeymapEditorView: NSView {
     private func showPanel(_ on: Bool) {
         controllerToggle.state = on ? .on : .off
         guard on != showsController else { return }
+        // A move or resize the panel never heard the end of starts over.
+        panelMoveStart = nil
         guard on else {
             panelHost?.removeFromSuperview()
             panelHost = nil
@@ -1246,12 +1251,15 @@ final class KeymapEditorView: NSView {
     }
 
     /// Keeps the panel in its place as the window and the panel change size.
-    private func placePanel() {
-        guard panelMoveStart == nil, let host = panelHost, let leading = panelLeading, let top = panelTop else { return }
+    /// Whether it moved it.
+    private func placePanel() -> Bool {
+        guard panelMoveStart == nil, let host = panelHost, let leading = panelLeading, let top = panelTop else { return false }
         let room = panelRoom(host), place = panelPlace
         let x = (Self.panelMargin + room.width * place.x).rounded(), y = (Self.panelMargin + room.height * place.y).rounded()
-        if abs(leading.constant - x) > 0.5 { leading.constant = x }
-        if abs(top.constant - y) > 0.5 { top.constant = y }
+        var moved = false
+        if abs(leading.constant - x) > 0.5 { leading.constant = x; moved = true }
+        if abs(top.constant - y) > 0.5 { top.constant = y; moved = true }
+        return moved
     }
 
     /// The header dragged: the panel follows the pointer, never off the editor.
