@@ -253,17 +253,31 @@ and Android's screen lock bring the window back. Whether Android sees the
 display follows the panel then, not the hidden window. Chosen in full screen,
 it opens once full screen has ended.
 
-The title bar's last button opens Quick Settings (`QuickSettings.swift`), a
-transient popover in the Library's haze look with only the settings whose
-effect shows at once: this app's graphics (profile, resolution or follow
-window with its render scale, MetalFX, sharpness), Android's frame rate cap
-(for every app), the performance HUD, Game Mode and the key hints when the
+The title bar keeps few buttons. Back (Android's) sits at the leading edge,
+next to the window's own buttons, as a Mac app's Back does. The trailing side
+always has three: capture (screenshots and recordings), More and Settings.
+Before them, only while they matter, come game controls (an app with the
+Games profile or a key mapping), Translate Screen (while the translation
+shows, to stop it), the fingerprint (while this app, the lock screen or
+Settings asks for a finger) and Keep on Top (a filled pin while it is on).
+More's menu has what has no button then: game controls, Translate Screen and
+Translate Into, the fingerprint, Keep on Top, Picture in Picture, and All
+Settings for the app, which opens its page in the Control Panel
+(`avo-control-panel://app/<package>`, `ControlPanelLink`; the Library comes
+forward with the page over it).
+
+The title bar's last button, a gear, opens Quick Settings
+(`QuickSettings.swift`), a transient popover in the Library's haze look with
+only the settings whose effect shows at once: this app's graphics (profile,
+resolution or follow window with its render scale, MetalFX, sharpness),
+Android's frame rate cap (for every app), the performance HUD, Game Mode and the key hints when the
 app has a key mapping, the scroll mode, and Translate Screen with Translate
 Into. Graphics save through `setAppGraphics`, which a shim may call only for
 the package it said hello as; the frame rate cap saves through
 `setFrameRateLimit`, which changes nothing else (a cap that needs another
 display rate says Android runs at it after a restart). Everything that
-needs a restart stays in the Control Panel.
+needs a restart stays in the Control Panel, a click away at the bottom (All
+Settings for the app).
 
 Input from a window, in order of precedence:
 
@@ -291,9 +305,9 @@ phone's one app has (games pause their sound without it).
 Many Android views ignore `ACTION_SCROLL` (ViewPager, many Compose, Flutter,
 React Native and custom views, games), while touch drags alone would lose the
 wheel's precision where views support it. Controls › Scrolling (also in the
-title bar's game controller menu) picks the scroll mode for the app, and the
-default for every app: the app's choice is kept in its App Shim's defaults
-(`AvoScrollMode`), the default in the Window Host's defaults
+title bar's game controller menu, and under More) picks the scroll mode for
+the app, and the default for every app: the app's choice is kept in its App
+Shim's defaults (`AvoScrollMode`), the default in the Window Host's defaults
 (`AvoScrollModeDefault`, which every shim reads); choosing the default's mode
 for an app follows the default again (`ScrollModeSettings`).
 

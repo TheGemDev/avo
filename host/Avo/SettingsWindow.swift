@@ -155,6 +155,7 @@ struct SettingsWindow: View {
     @State private var pointer = HazePointer()
     @Environment(\.appearsActive) private var appearsActive
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         let pane = selection ?? stored
@@ -203,6 +204,10 @@ struct SettingsWindow: View {
         }
         .onChange(of: router.requestedSettingsPane) {
             if let pane = takeRequest() { selection = pane }
+        }
+        // An app's page asked for while the Library was closed: it opens and shows it.
+        .onChange(of: router.requestedAppPage) { _, package in
+            if package != nil { openWindow(id: LibraryRouter.windowID) }
         }
         .onChange(of: selection) { old, new in
             guard let new else { return }

@@ -53,9 +53,13 @@ final class LibraryRouter {
     /// A pane the Settings window should show when it next appears (a link
     /// from an app window, the Setup Assistant).
     var requestedSettingsPane: SettingsPane?
+    /// An app whose page the Library should show (an app window's All
+    /// Settings…); the Library brings itself forward for it.
+    var requestedAppPage: String?
     /// Clear Data… or Uninstall… from an app's menu (AppTileInteraction.swift), to confirm.
     var confirmation: AppConfirmation?
 
+    static let windowID = "library"
     static let sectionKey = "AvoLibrarySection"
     static let gamesListKey = "AvoLibraryGamesAsList"
 
@@ -142,6 +146,14 @@ struct LibraryView: View {
         // Assistant): the Settings window shows it.
         .onChange(of: router.requestedSettingsPane, initial: true) { _, pane in
             if pane != nil { openWindow(id: SettingsWindow.id) }
+        }
+        // An app's page asked for (All Settings… in its window): over the
+        // Library, which comes forward.
+        .onChange(of: router.requestedAppPage, initial: true) { _, package in
+            guard let package else { return }
+            router.requestedAppPage = nil
+            router.page = package
+            openWindow(id: LibraryRouter.windowID)
         }
         .background { LibraryWindowAccessor(pillHidden: router.page != nil, pointer: pointer) }
     }

@@ -2,6 +2,7 @@ import AppKit
 import AvoKeymap
 import AvoKit
 import AvoProtocol
+import os
 
 /// One macOS window showing one Android VirtualDisplay (spec: "satu NSWindow
 /// per VirtualDisplay").
@@ -49,28 +50,39 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// ⌥⌘P for this window and session; nil follows the Control Panel.
     private var hudOverride: PerformanceHUDLevel?
     private let hud = PerformanceHUDView()
+    /// Android's Back, at the title bar's leading edge (next to the window's
+    /// buttons, where a Mac app has its own Back).
     private let backButton = TitlebarButton(symbol: "chevron.backward", label: String(localized: "Back", bundle: .windowHost),
                                             action: #selector(AndroidWindowController.sendBack))
-    /// Game Mode, Edit Key Mapping and the key hints (filled while Game Mode is on).
+    /// Game Mode, Edit Key Mapping and the key hints (filled while Game Mode
+    /// is on). Only for games; the More menu has it for every app.
     private let gameModeButton = TitlebarButton(symbol: "gamecontroller", label: String(localized: "Game Controls", bundle: .windowHost),
                                                 action: nil)
-    /// Translate Screen and Translate Into.
+    /// Translate Screen and Translate Into. Only while translating, to stop
+    /// it; the More menu and ⌘⇧T start it.
     private let translateButton = TitlebarButton(symbol: "translate", label: String(localized: "Translate Screen (⌘⇧T)", bundle: .windowHost),
                                                  action: nil)
     /// Take Screenshot, Record Screen and their folders (red while recording).
     private let captureButton = TitlebarButton(symbol: "camera", label: String(localized: "Screenshot and Screen Recording", bundle: .windowHost),
                                                action: nil)
     private var titlebarActions: [TitlebarButton] { [backButton, gameModeButton, translateButton, captureButton] }
-    /// Keep on Top (also View › Keep on Top): a pin, filled while this app's
-    /// windows float over other apps'. Not one of `titlebarActions`: it works
-    /// without the display.
+    /// Keep on Top (also View › Keep on Top): a filled pin, only while this
+    /// app's windows float over other apps'; a click turns it off. Not one of
+    /// `titlebarActions`: it works without the display.
     private let keepOnTopButton = TitlebarButton(symbol: "pin", label: String(localized: "Keep on Top", bundle: .windowHost),
                                                  action: #selector(AndroidWindowController.toggleKeepOnTop))
+    /// What has no button of its own: game controls, translation, the
+    /// fingerprint, Keep on Top, Picture in Picture and the app's page in the
+    /// Control Panel.
+    private let moreButton = TitlebarButton(symbol: "ellipsis.circle", label: String(localized: "More", bundle: .windowHost), action: nil)
     /// Touches Android's fingerprint sensor with a finger from Settings ›
-    /// Fingerprints (FingerprintMenu.swift). Not one of `titlebarActions`: it
-    /// works without the display, also on Android's lock screen.
+    /// Fingerprints (FingerprintMenu.swift). Its button shows while something
+    /// this window shows asks for a finger; the More menu has it always. Not
+    /// one of `titlebarActions`: it works without the display, also on
+    /// Android's lock screen.
     private lazy var fingerprintMenu = FingerprintMenu(package: app?.package ?? "", appName: app?.label ?? "",
-                                                       notice: { [weak self] text in self?.notice.show(text) })
+                                                       notice: { [weak self] text in self?.notice.show(text) },
+                                                       askingChanged: { [weak self] in self?.updateTitlebarButtons() })
     /// The settings that apply at once, in an overlay under the title bar
     /// (QuickSettings.swift). Also before the display opens: graphics apply to it.
     private lazy var quickSettings = QuickSettingsOverlay(target: self)
@@ -79,7 +91,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     lazy var translation = ScreenTranslationController(displayView: displayView, button: translateButton,
                                                        notice: { [weak self] text in self?.notice.show(text) },
                                                        keysBelongToGame: { [weak self] in self?.keymapTakesClicks == true },
-                                                       engine: { [weak self] in self?.client })
+                                                       engine: { [weak self] in self?.client },
+                                                       activeChanged: { [weak self] in self?.updateTitlebarButtons() })
     /// Keeps a ProMotion or adaptive screen at Android's rate above 60 Hz.
     private lazy var frameRateHint = FrameRateHint(view: displayView, renderer: displayView.renderer)
     /// The screen recording in progress.
@@ -98,35 +111,108 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// Keep on Top and where Picture in Picture goes, for this app (WindowModeSettings).
     static let windowModes = WindowModeSettings(store: .standard)
 
-    /// Back, then three icons that open menus of related actions (the same
-    /// as the menu bar's): game controls, translation and capture; then the
-    /// fingerprint, whose menu has no menu bar counterpart, Keep on Top, and
-    /// last Quick Settings.
+    /// Back on the leading side. On the trailing side three buttons always:
+    /// capture, More and Settings (Quick Settings); before them, only while
+    /// they matter, game controls (games), translation (while it shows), the
+    /// fingerprint (while asked for) and Keep on Top (while on).
+    private lazy var backAccessory = titlebarAccessory([backButton], layout: .leading)
     private lazy var titlebarButtons: NSTitlebarAccessoryViewController = {
         backButton.target = self
         keepOnTopButton.target = self
         gameModeButton.popUpMenu = { [weak self] in self?.gameControlsMenu() }
         translateButton.popUpMenu = { [weak self] in self?.translationMenu() }
         captureButton.popUpMenu = { [weak self] in self?.captureMenu() }
-        let stack = NSStackView(views: titlebarActions + [fingerprintMenu.button, keepOnTopButton, quickSettings.button])
+        moreButton.popUpMenu = { [weak self] in self?.moreMenu() }
+        // They act on the display, which exists once `openDisplay` returns.
+        for button in titlebarActions { button.isEnabled = false }
+        return titlebarAccessory([gameModeButton, translateButton, fingerprintMenu.button, keepOnTopButton,
+                                  captureButton, moreButton, quickSettings.button], layout: .trailing)
+    }()
+
+    /// Buttons in a row at one side of the title bar. Side accessories are
+    /// laid out by their frame, not Auto Layout (`fitTitlebarAccessory`).
+    private func titlebarAccessory(_ buttons: [NSView], layout: NSLayoutConstraint.Attribute) -> NSTitlebarAccessoryViewController {
+        let stack = NSStackView(views: buttons)
         stack.orientation = .horizontal
         stack.spacing = 2
         stack.translatesAutoresizingMaskIntoConstraints = false
-        // Trailing accessories are laid out by their frame, not Auto Layout.
-        let size = stack.fittingSize
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: size.width + 10, height: max(size.height, 28)))
+        let container = NSView(frame: .zero)
         container.addSubview(stack)
         NSLayoutConstraint.activate([
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
+            layout == .leading ? stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 8)
+                               : stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
             stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
         ])
         let controller = NSTitlebarAccessoryViewController()
-        controller.layoutAttribute = .trailing
+        controller.layoutAttribute = layout
         controller.view = container
-        // They act on the display, which exists once `openDisplay` returns.
-        for button in titlebarActions { button.isEnabled = false }
+        fitTitlebarAccessory(controller)
         return controller
-    }()
+    }
+
+    /// Sizes an accessory to its buttons that show (a hidden one takes no room).
+    private func fitTitlebarAccessory(_ controller: NSTitlebarAccessoryViewController) {
+        guard let stack = controller.view.subviews.first else { return }
+        let size = stack.fittingSize
+        controller.view.setFrameSize(NSSize(width: size.width + 10, height: max(size.height, 28)))
+    }
+
+    /// Shows the trailing buttons that matter now (see `titlebarButtons`).
+    private func updateTitlebarButtons() {
+        gameModeButton.isHidden = !(graphics.profile == .games || hasKeyMapping || keymap?.gameMode == true)
+        translateButton.isHidden = !translation.isActive
+        fingerprintMenu.button.isHidden = !fingerprintMenu.isAsking
+        keepOnTopButton.isHidden = !Self.windowModes.keepOnTop
+        fitTitlebarAccessory(titlebarButtons)
+    }
+
+    /// The More button's menu: what has no button of its own, or only
+    /// while it matters.
+    private func moreMenu() -> NSMenu {
+        let menu = NSMenu()
+        func submenu(_ title: String, symbol: String, _ items: NSMenu?) {
+            guard let items else { return }
+            let item = menu.addItem(withTitle: title, action: nil, keyEquivalent: "")
+            item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+            item.submenu = items
+        }
+        submenu(String(localized: "Game Controls", bundle: .windowHost), symbol: "gamecontroller", gameControlsMenu())
+        submenu(String(localized: "Translation", bundle: .windowHost), symbol: "translate", translationMenu())
+        submenu(FingerprintMenu.title, symbol: "touchid", fingerprintMenu.makeMenu())
+        menu.addItem(.separator())
+        let window = [
+            menu.addItem(withTitle: String(localized: "Keep on Top", bundle: .windowHost), action: #selector(toggleKeepOnTop), keyEquivalent: ""),
+            menu.addItem(withTitle: String(localized: "Picture in Picture", bundle: .windowHost), action: #selector(togglePictureInPicture),
+                         keyEquivalent: ""),
+        ]
+        menu.addItem(.separator())
+        let page = menu.addItem(withTitle: String(localized: "All Settings for \(app?.label ?? "")…", bundle: .windowHost),
+                                action: #selector(openAppSettings), keyEquivalent: "")
+        for item in window + [page] { item.target = self }
+        return menu
+    }
+
+    /// This app's page in the Control Panel, with everything Quick Settings
+    /// leaves out (Avo.app takes the link).
+    @objc func openAppSettings() {
+        guard let app else { return }
+        quickSettings.close()
+        Self.openControlPanel(ControlPanelLink.url(appPage: app.package))
+    }
+
+    /// Opens a Control Panel link with this Avo's own Avo.app.
+    static func openControlPanel(_ link: URL) {
+        guard let avo = hostApplication ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: AvoIdentifiers.app) else {
+            NSWorkspace.shared.open(link)
+            return
+        }
+        NSWorkspace.shared.open([link], withApplicationAt: avo, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+            if let error {
+                Logger(subsystem: AvoIdentifiers.logSubsystem, category: "Window")
+                    .error("cannot open the Control Panel: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
 
     /// The game controller's menu (also Controls in the menu bar).
     private func gameControlsMenu() -> NSMenu {
@@ -273,6 +359,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
             lockOverlay.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
         window.contentView = container
+        window.addTitlebarAccessoryViewController(backAccessory)
         window.addTitlebarAccessoryViewController(titlebarButtons)
         window.addTitlebarAccessoryViewController(recordingAccessory)
         // The accessory's own isHidden does not hide it in the title bar
@@ -302,6 +389,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         applyHUDLevel()
         applyWindowLevel()
         frameRateHint.setCap(app.config.fpsLimit)
+        updateTitlebarButtons()
     }
 
     @available(*, unavailable)
@@ -791,6 +879,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
                                        accessibilityDescription: gameModeButton.toolTip)?
             .withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
         hints.gameMode = on
+        updateTitlebarButtons()
         quickSettings.refresh()
     }
 
@@ -980,13 +1069,14 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     /// Floats over other apps' windows while Keep on Top is on; full screen
-    /// has its own Space. The pin shows the setting either way.
+    /// has its own Space. The pin shows while it is on, in full screen too.
     func applyWindowLevel() {
         let on = Self.windowModes.keepOnTop
         keepOnTopButton.state = on ? .on : .off
         keepOnTopButton.contentTintColor = on ? .controlAccentColor : nil
         keepOnTopButton.image = NSImage(systemSymbolName: on ? "pin.fill" : "pin", accessibilityDescription: keepOnTopButton.toolTip)?
             .withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
+        updateTitlebarButtons()
         guard let window else { return }
         let floats = on && !fullScreenTransition && !window.styleMask.contains(.fullScreen)
         window.level = floats ? .floating : .normal
@@ -1167,12 +1257,16 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
             applyOrientation(orientation == .landscape ? .landscape : .portrait)
         }
         applyWindowConstraints()
+        updateTitlebarButtons()
         scheduleResize(delay: immediate ? .zero : .milliseconds(300), announce: true)
     }
 
     /// A key mapping was created or removed: the app may become a game, or stop being one.
     private func keyMappingChanged(_ has: Bool) {
-        defer { quickSettings.refresh() }
+        defer {
+            updateTitlebarButtons()
+            quickSettings.refresh()
+        }
         guard has != hasKeyMapping else { return }
         let before = graphics
         hasKeyMapping = has
@@ -1520,6 +1614,7 @@ extension AndroidWindowController: QuickSettingsTarget {
     var quickSettingsState: QuickSettingsState {
         var state = QuickSettingsState()
         guard let app else { return state }
+        state.appName = app.label
         state.graphics = graphics
         if let profile = app.deviceProfile, let display = profile.display {
             state.phone = .init(name: profile.name, display: display)
@@ -1579,5 +1674,9 @@ extension AndroidWindowController: QuickSettingsTarget {
 
     func quickSettingsSetTranslating(_ on: Bool) {
         if translation.isActive != on { translation.toggle() }
+    }
+
+    func quickSettingsOpenAppSettings() {
+        openAppSettings()
     }
 }

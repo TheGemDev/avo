@@ -1169,7 +1169,8 @@ private struct PlaybackControls: View {
     }
 }
 
-private struct LocationButton: View {
+/// Also Quick Settings' All Settings.
+struct LocationButton: View {
     enum Style { case primary, secondary }
     let title: String
     let symbol: String

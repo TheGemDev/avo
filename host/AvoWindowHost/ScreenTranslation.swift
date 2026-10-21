@@ -37,6 +37,8 @@ final class ScreenTranslationController {
     private let keysBelongToGame: () -> Bool
     /// The daemon, whose text engine reads and translates.
     private let engine: () -> DaemonClient?
+    /// Translating started or stopped (the title bar shows the button only while it is on).
+    private let activeChanged: () -> Void
     private lazy var overlay = ScreenTranslationOverlay(displayRect: { [weak displayView] in displayView?.displayRect ?? .zero })
     private let hosted = HostedTranslator()
     /// The view whose task hands out `hosted`'s sessions. Held here, not by
@@ -120,12 +122,13 @@ final class ScreenTranslationController {
     private var progressDelay: Task<Void, Never>?
 
     init(displayView: DisplayView, button: TitlebarButton, notice: @escaping (String) -> Void,
-         keysBelongToGame: @escaping () -> Bool, engine: @escaping () -> DaemonClient?) {
+         keysBelongToGame: @escaping () -> Bool, engine: @escaping () -> DaemonClient?, activeChanged: @escaping () -> Void) {
         self.displayView = displayView
         self.button = button
         showNotice = notice
         self.keysBelongToGame = keysBelongToGame
         self.engine = engine
+        self.activeChanged = activeChanged
         // Translate Into lists them by the time a menu opens.
         Task { _ = await TranslationLanguages.supported() }
     }
@@ -233,6 +236,7 @@ final class ScreenTranslationController {
         button.contentTintColor = isActive ? .controlAccentColor : nil
         button.toolTip = label
         button.setAccessibilityLabel(label)
+        activeChanged()
     }
 
     // MARK: Keys and language

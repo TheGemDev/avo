@@ -584,6 +584,16 @@
         }
       }
     },
+    "All Settings for %@…" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semua Pengaturan untuk %@…"
+          }
+        }
+      }
+    },
     "Anchor Tap" : {
       "localizations" : {
         "id" : {
@@ -3808,6 +3818,16 @@
     },
     "Set Up %@" : {
 
+    },
+    "Settings" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengaturan"
+          }
+        }
+      }
     },
     "Sharing this Mac’s location is off in Settings › Privacy & Security, so Android will have no location." : {
       "localizations" : {

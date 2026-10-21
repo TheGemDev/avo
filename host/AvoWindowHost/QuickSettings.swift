@@ -4,19 +4,22 @@ import AvoKit
 import CoreText
 import SwiftUI
 
-// Quick Settings: the title bar's slider button opens, under itself, the
+// Quick Settings: the title bar's gear button opens, under itself, the
 // settings of this window whose effect shows at once, in the Library's haze
 // look: this app's graphics (as on its page in the Control Panel) with
 // Android's frame rate cap, the performance HUD, the key mapping, scrolling
 // and Translate Screen. What needs Android to restart or applies elsewhere
 // (CPU, memory, renderer, device identity, Android version) stays in the
-// Control Panel. Last, where Android's GPS says it is, with the Location
-// panel a click away. A click outside the overlay or Esc closes it.
+// Control Panel, a click away at the bottom (All Settings for the app). Last
+// but that, where Android's GPS says it is, with the Location panel a click
+// away. A click outside the overlay or Esc closes it.
 
 // MARK: - What it shows and changes
 
 /// The overlay's settings as its window has them now.
 struct QuickSettingsState: Equatable {
+    /// The app's name, for All Settings.
+    var appName = ""
     struct KeyMapping: Equatable {
         var gameMode: Bool
         var hintsVisible: Bool
@@ -70,6 +73,8 @@ protocol QuickSettingsTarget: AnyObject {
     func quickSettingsSetHUDLevel(_ level: PerformanceHUDLevel)
     func quickSettingsSetGameMode(_ on: Bool)
     func quickSettingsSetTranslating(_ on: Bool)
+    /// The app's page in the Control Panel.
+    func quickSettingsOpenAppSettings()
 }
 
 @MainActor
@@ -151,7 +156,7 @@ final class QuickSettingsModel: ObservableObject {
 final class QuickSettingsOverlay: NSObject, NSPopoverDelegate {
     static var title: String { String(localized: "Quick Settings", bundle: .windowHost) }
 
-    let button = TitlebarButton(symbol: "slider.horizontal.3", label: QuickSettingsOverlay.title, action: nil)
+    let button = TitlebarButton(symbol: "gearshape", label: String(localized: "Settings", bundle: .windowHost), action: nil)
     private let model = QuickSettingsModel()
     private var popover: NSPopover?
     private var observers: [any NSObjectProtocol] = []
@@ -174,6 +179,10 @@ final class QuickSettingsOverlay: NSObject, NSPopoverDelegate {
         } else if ProcessInfo.processInfo.systemUptime - closedAt > 0.3 {
             show()
         }
+    }
+
+    func close() {
+        popover?.performClose(nil)
     }
 
     /// Something it shows changed in the window (the daemon's configuration, ⌘G, ⌥⌘P).
@@ -274,6 +283,11 @@ struct QuickSettingsView: View {
                 translationCard(state)
                 // Android's GPS: this Mac, a place or a route (LocationPanel.swift).
                 QuickLocationCard()
+                // What applies elsewhere or needs Android to restart: the app's page.
+                LocationButton(title: L("All Settings for \(state.appName)…"), symbol: "gearshape", style: .secondary) {
+                    model.change { $0.quickSettingsOpenAppSettings() }
+                }
+                .frame(maxWidth: .infinity)
             }
             .padding(12)
         }

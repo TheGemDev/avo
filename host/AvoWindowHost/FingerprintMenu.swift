@@ -75,19 +75,25 @@ final class FingerprintMenu: NSObject {
     private let package: String
     private let appName: String
     private let notice: (String) -> Void
+    /// `isAsking` changed (the title bar shows the button only while it is);
+    /// set once the first status is in, which the window reads as it opens.
+    private var askingChanged: () -> Void = {}
+    /// Something this window shows asks for a finger, and one can be touched.
+    private(set) var isAsking = false
     private let logger = Logger(subsystem: AvoIdentifiers.logSubsystem, category: "Fingerprints")
     /// The request a notice was shown for (one notice per request).
     private var announced: FingerprintRequest?
 
     static var title: String { String(localized: "Fingerprint", bundle: .windowHost) }
 
-    init(package: String, appName: String, notice: @escaping (String) -> Void) {
+    init(package: String, appName: String, notice: @escaping (String) -> Void, askingChanged: @escaping () -> Void) {
         self.package = package
         self.appName = appName
         self.notice = notice
         super.init()
         button.popUpMenu = { [weak self] in self?.makeMenu() }
         ShimFingerprints.shared.observe(self) { [weak self] status in self?.statusChanged(status) }
+        self.askingChanged = askingChanged
     }
 
     // MARK: The button
@@ -101,6 +107,10 @@ final class FingerprintMenu: NSObject {
     private func statusChanged(_ status: FingerprintStatus) {
         let request = status.request.flatMap { concernsThisWindow($0) && status.canTouch ? $0 : nil }
         button.contentTintColor = request == nil ? nil : .controlAccentColor
+        if isAsking != (request != nil) {
+            isAsking = request != nil
+            askingChanged()
+        }
         let tip = request.map(headline) ?? Self.title
         button.toolTip = tip
         button.setAccessibilityLabel(tip)
@@ -124,7 +134,7 @@ final class FingerprintMenu: NSObject {
 
     // MARK: The menu
 
-    private func makeMenu() -> NSMenu {
+    func makeMenu() -> NSMenu {
         let shared = ShimFingerprints.shared
         // Shown as known; the daemon asks Android again when its answer is
         // a few seconds old, ready for the next time.
@@ -285,13 +295,6 @@ final class FingerprintMenu: NSObject {
 
     /// Settings › Fingerprints in the Control Panel (Avo.app takes the link).
     @objc private func manageFingerprints() {
-        let link = ControlPanelLink.url(pane: ControlPanelLink.fingerprintsPane)
-        guard let avo = AndroidWindowController.hostApplication ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: AvoIdentifiers.app) else {
-            NSWorkspace.shared.open(link)
-            return
-        }
-        NSWorkspace.shared.open([link], withApplicationAt: avo, configuration: NSWorkspace.OpenConfiguration()) { [logger] _, error in
-            if let error { logger.error("cannot open the Control Panel: \(error.localizedDescription, privacy: .public)") }
-        }
+        AndroidWindowController.openControlPanel(ControlPanelLink.url(pane: ControlPanelLink.fingerprintsPane))
     }
 }
