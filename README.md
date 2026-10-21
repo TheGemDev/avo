@@ -53,14 +53,17 @@ your Mac's GPU through gfxstream and Metal.
 - Android follows the Mac: dark mode, time zone, 24-hour clock, language and
   battery level.
 - Screen translation (⌘⇧T), screenshots and screen recordings with sound,
-  Keep on Top and Picture in Picture.
+  Keep on Top and Picture in Picture, and a shake of the phone for apps that
+  listen for one.
 - A shared folder between the Mac and Android, location from the Mac (or a
   place or route you choose), the Mac's microphone, and mock fingerprints for
   apps that ask for one.
 
 **Games**
 - Key mapping: put keys on a game's touch controls, with templates for
-  shooters, MOBAs and racing games; profiles can be shared.
+  shooters, MOBAs and racing games; profiles can be shared. Modes switch the
+  layout with the game (on foot, in a vehicle), and one key may press several
+  buttons.
 - Shooter mode with mouse-look, and full game controller support with a
   visual controller editor.
 - GPU rendering through gfxstream and MoltenVK, a frame-rate cap of 30, 60,
@@ -215,6 +218,16 @@ priority help.
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), the
 [Code of Conduct](CODE_OF_CONDUCT.md) and [SUPPORT.md](SUPPORT.md).
+
+### Contributors
+
+Thank you to everyone who has made Avo better:
+
+<a href="https://github.com/nizwar/avo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=nizwar/avo" alt="Avo's contributors" />
+</a>
+
+<sub>Made with [contrib.rocks](https://contrib.rocks).</sub>
 
 ## Acknowledgements
 

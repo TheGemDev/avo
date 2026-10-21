@@ -34,6 +34,7 @@ struct RendererStatusRow: View {
                 }
             }
             .font(.mona(13))
+            .hazeRowNote()
         }
     }
 

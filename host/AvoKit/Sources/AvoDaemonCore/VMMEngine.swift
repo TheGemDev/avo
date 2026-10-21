@@ -632,6 +632,32 @@ extension VMMEngine: FingerprintEngine {
     }
 }
 
+/// An app window's Device › Shake.
+extension VMMEngine: ShakeEngine {
+    func shake() async throws {
+        await wakeIfPaused()
+        guard let control = lock.withLock({ self.control }) else { throw AvoError.vmNotRunning }
+        try await control.send("shake")
+    }
+}
+
+extension VMMEngine: VolumeEngine {
+    func mediaVolume() async throws -> AndroidVolume {
+        try await readyAgent().mediaVolume()
+    }
+
+    func setMediaVolume(_ level: Int) async throws -> AndroidVolume {
+        try await readyAgent().setMediaVolume(level)
+    }
+
+    /// The host agent, once Android has started (woken from a pause first).
+    private func readyAgent() async throws -> HostAgent {
+        await wakeIfPaused()
+        guard let agent = lock.withLock({ self.agent }), await agent.isReady else { throw AvoError.vmNotRunning }
+        return agent
+    }
+}
+
 /// Library › Widgets: Avo Widgets, which HostAgent installs.
 extension VMMEngine: WidgetsEngine {
     func widgetsGuest() async throws -> any WidgetsGuest {

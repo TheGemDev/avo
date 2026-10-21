@@ -410,17 +410,48 @@ actor HostAgent: DisplayResizing {
 
     /// Android's media volume starts at a third, which plays 33 dB under the
     /// Mac's other apps: like any Mac app, Android plays at full scale and the
-    /// Mac's volume sets how loud. Once per data disk; after that the user's
-    /// setting stands.
+    /// Mac's volume sets how loud (Quick Settings and Settings › Devices turn
+    /// Android's own down). Once per data disk, and once more on disks from
+    /// before those sliders (marker 2), where something in Android had left
+    /// it low; after that the user's setting stands.
     private func raiseMediaVolume() async {
-        guard (try? await shell("settings get global avo_media_volume_set"))?.trimmed != "1" else { return }
-        let music = 3 // AudioManager.STREAM_MUSIC
-        guard let output = try? await shell("cmd media_session volume --stream \(music) --get"),
-              let range = output.range(of: #"\[0\.\.(\d+)\]"#, options: .regularExpression),
-              let maximum = Int(output[range].dropFirst(4).dropLast()) else { return }
+        let marker = "2"
+        guard (try? await shell("settings get global avo_media_volume_set"))?.trimmed != marker,
+              let volume = try? await mediaVolume() else { return }
+        _ = try? await setMediaVolume(volume.maximum)
+        _ = try? await shell("settings put global avo_media_volume_set \(marker)")
+    }
+
+    // MARK: Media volume
+
+    /// AudioManager.STREAM_MUSIC: what apps and games play on.
+    static let musicStream = 3
+
+    /// Android's media volume, for the volume sliders.
+    func mediaVolume() async throws -> AndroidVolume {
+        let output = try await shell("cmd media_session volume --stream \(Self.musicStream) --get")
+        guard let volume = Self.mediaVolume(from: output) else {
+            throw AvoError.internalError(String(localized: "Android did not say its volume.", bundle: .avoKit))
+        }
+        return volume
+    }
+
+    /// Sets the media volume, within its steps; Android shows no volume panel.
+    func setMediaVolume(_ level: Int) async throws -> AndroidVolume {
+        let maximum = try await mediaVolume().maximum
+        let level = min(max(level, 0), maximum)
         // As root: Android's audio hardening ignores volume changes from the shell user.
-        _ = try? await root("cmd media_session volume --stream \(music) --set \(maximum)")
-        _ = try? await shell("settings put global avo_media_volume_set 1")
+        try await root("cmd media_session volume --stream \(Self.musicStream) --set \(level)")
+        return AndroidVolume(level: level, maximum: maximum)
+    }
+
+    /// "volume is 3 in range [0..15]" (`cmd media_session volume --get`).
+    static func mediaVolume(from output: String) -> AndroidVolume? {
+        guard let range = output.range(of: #"volume is \d+ in range \[0\.\.\d+\]"#, options: .regularExpression) else { return nil }
+        // The level, 0, the maximum.
+        let numbers = output[range].split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
+        guard numbers.count == 3, numbers[2] > 0 else { return nil }
+        return AndroidVolume(level: numbers[0], maximum: numbers[2])
     }
 
     /// Stops Cuttlefish's Thread HAL when the image has one (init keeps a
