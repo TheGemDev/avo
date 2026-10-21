@@ -218,15 +218,15 @@ sent, so the engine keeps every app's translations while the daemon runs (in
 memory only: they are the screen's text), and a window asks for the known
 ones of a new screen at once (`knownTranslations`) before anything new is
 translated. Vision builds its text models for each program that reads text
-(about 25 s, again after a macOS or Avo update) and loads them in a moment
-at that program's next start; a model another program built is built again
-over it, so App Shims, each a program of its own, could not share them. The
-daemon builds and loads them once: at its start (Settings › General ›
-Translate Screen, `translationAtStartup`, on by default) or when Translate
-Screen first turns on in any app (`wakeScreenText`, which also loads the
-language pair translated last: macOS lets go of a pair's model a minute
-after its last use). A pair macOS must download first, and every pair on
-macOS 15, is translated in the window instead, by a SwiftUI translation
+(about 25 s, again after a macOS update; an update of Avo keeps them) and
+loads them in a moment at that program's next start; a model another program
+built is built again over it, so App Shims, each a program of its own, could
+not share them. The daemon builds and loads them once: at its start (Settings
+› General › Translate Screen, `translationAtStartup`, on by default) or when
+Translate Screen first turns on in any app (`wakeScreenText`, which also
+loads the language pair translated last: macOS lets go of a pair's model a
+minute after its last use). A pair macOS must download first, and every pair
+on macOS 15, is translated in the window instead, by a SwiftUI translation
 session, which can show the system's download sheet.
 
 Keep on Top floats every window of the app over other apps' windows

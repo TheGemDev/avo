@@ -13,13 +13,13 @@ import Vision
 /// Apple's Translation framework translates it on the Mac.
 ///
 /// It lives in the daemon because Vision takes long to get ready: it builds
-/// its text models for each program that reads text (about 25 s, again after
-/// a macOS or Avo update), then loads them in a moment at that program's
-/// next start. Every App Shim is a program of its own, so each app built
-/// them for itself ("Preparing text recognition" in every app). Here they
-/// are built and loaded once: as the daemon starts
-/// (`VMConfig.translationAtStartup`), or when Translate Screen first turns on
-/// in any app, and every app after that finds the engine ready.
+/// its text models for each app that reads text (about 25 s, again after a
+/// macOS update; an update of the app keeps them), then loads them in a
+/// moment at that app's next start. Every App Shim is a program of its own,
+/// so each app built them for itself ("Preparing text recognition" in every
+/// app). Here they are built and loaded once: as the daemon starts
+/// (`VMConfig.translationAtStartup`), or when Translate Screen first turns
+/// on in any app, and every app after that finds the engine ready.
 public final class ScreenTextEngine: Sendable {
     /// Reads, one frame at a time, after the warm-up.
     private let queue = DispatchQueue(label: "dev.avo.screen-text", qos: .userInitiated)
