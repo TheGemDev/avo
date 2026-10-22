@@ -674,6 +674,8 @@ struct SystemPane: View {
                 TranslateIntoRow()
             }
             .shown(sections.contains(.translation))
+            CheckpointsSection()
+                .shown(sections.contains(.checkpoints))
             Section("Maintenance") {
                 Button("Reset Android…", role: .destructive) { confirmReset = true }
                     .disabled(model.isInstallingGoogleApps)
@@ -747,6 +749,9 @@ struct SystemPane: View {
         if model.fingerprints?.fingers.contains(where: \.enrolled) ?? false {
             text = text + Text(verbatim: " ") + Text("Android forgets its fingerprints; your fingers stay in Settings › Fingerprints, to add again.")
         }
+        if !(model.checkpoints?.checkpoints.isEmpty ?? true) {
+            text = text + Text(verbatim: " ") + Text("Its checkpoints are erased too.")
+        }
         return text
     }
 }
@@ -772,7 +777,8 @@ struct SystemSections: OptionSet {
     static let translation = SystemSections(rawValue: 1 << 15)
     static let sound = SystemSections(rawValue: 1 << 16)
     static let scrolling = SystemSections(rawValue: 1 << 17)
-    static let all = SystemSections(rawValue: (1 << 18) - 1)
+    static let checkpoints = SystemSections(rawValue: 1 << 18)
+    static let all = SystemSections(rawValue: (1 << 19) - 1)
 }
 
 /// Android's media volume, every app's: a slider while Android runs (also

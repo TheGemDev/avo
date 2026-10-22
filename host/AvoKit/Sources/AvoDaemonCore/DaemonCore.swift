@@ -116,7 +116,7 @@ public actor DaemonCore {
 
     private(set) var config: VMConfig
     /// Configuration the running VM booted with (for "restart needed").
-    private var bootedConfig: VMConfig?
+    var bootedConfig: VMConfig?
     /// Android's display rate that boot (FrameRates.androidRate).
     private var bootedDisplayRate = FrameRates.standardRate
     private var clients: [ClientID: Client] = [:]
@@ -147,11 +147,11 @@ public actor DaemonCore {
     private var lastActivity: [String: AppActivity] = [:]
     private var started = false
     /// When Android was last asked about its storage (`dataDiskStatus`).
-    private var storageCheckedAt: ContinuousClock.Instant?
+    var storageCheckedAt: ContinuousClock.Instant?
     /// The Google apps install (or the recovery of an interrupted one)
     /// running now, one at a time; its latest progress, and whether it can
     /// still stop (nothing in Android changed yet).
-    private var googleAppsRun: Task<URL?, any Error>? { didSet { publishGoogleAppsBusy() } }
+    private(set) var googleAppsRun: Task<URL?, any Error>? { didSet { publishGoogleAppsBusy() } }
     /// Root being prepared (Magisk; `rootIfAsked`).
     private var rootRun: Task<Void, Never>?
     /// The first start with Magisk is under way: Android rebooting before it
@@ -176,7 +176,7 @@ public actor DaemonCore {
     /// How much each app is used, from its windows (AppUsageRecorder.swift).
     var usage: AppUsageRecorder
     /// A change of where Android's data is runs (starts wait for it).
-    private var storageChanging = false
+    private(set) var storageChanging = false
     /// A storage status for the Control Panels is on its way (volumes change in bursts).
     private var storagePublishPending = false
     /// Pause When Idle and what it waits for (AutoPause.swift).
@@ -396,7 +396,7 @@ public actor DaemonCore {
     /// The Library's usage statistics (AppUsageRecorder.swift), for Control Panels.
     func publishUsage(_ usage: [AppUsage]) { broadcast(.appUsage(usage), to: isControlPanel) }
 
-    private func isControlPanel(_ role: ClientHello.Role) -> Bool { role == .controlPanel }
+    func isControlPanel(_ role: ClientHello.Role) -> Bool { role == .controlPanel }
 
     /// Who hears `configurationChanged`: the Control Panel, and App Shims,
     /// whose windows follow graphics changes (the engine has no use for it).
@@ -499,6 +499,9 @@ public actor DaemonCore {
         await vm.stop()
         try? FileManager.default.removeItem(at: deps.paths.dataDisk)
         try? FileManager.default.removeItem(at: deps.paths.snapshots)
+        // Its checkpoints are of the data that went (Reset Android says so).
+        CheckpointStore(paths: deps.paths).removeAll()
+        publishCheckpoints()
         DataDiskStore(paths: deps.paths).forget()
         GoogleAppsJournal.remove(deps.paths)
         GoogleAppsRecord.remove(deps.paths)
@@ -570,7 +573,7 @@ public actor DaemonCore {
     }
 
     /// Stop, restart, snapshot and reset while Google apps install (GoogleAppsGuard).
-    private func clearForVMChange(_ action: GoogleAppsGuard.Action, force: Bool = false) async throws {
+    func clearForVMChange(_ action: GoogleAppsGuard.Action, force: Bool = false) async throws {
         switch GoogleAppsGuard.decide(action, installing: googleAppsRun != nil, cancellable: googleAppsCancellable, force: force) {
         case .allow:
             if googleAppsBusy {
@@ -586,7 +589,7 @@ public actor DaemonCore {
         }
     }
 
-    private func ensureRunning() async throws {
+    func ensureRunning() async throws {
         if storageChanging { throw AvoError.storage(.changing) }
         // A commit Avo did not see to its end (it quit, or Android was
         // stopped by force): finished or taken out before anything else.
@@ -607,6 +610,7 @@ public actor DaemonCore {
     }
 
     private func bootVM() async throws {
+        await checkpointBeforeNewerAndroid()
         let settings = self.settings
         try await vm.ensureRunning(settings)
         if bootedConfig == nil {
@@ -745,6 +749,11 @@ public actor DaemonCore {
         if new.fpsLimit != config.fpsLimit, frameRateNeedsRestart(new.fpsLimit) { effect = .restartRequired }
         guard !issues.contains(where: { $0.severity == .error }) else {
             return ConfigUpdateResult(effect: effect, issues: issues)
+        }
+        // Root on or another phone: Android's data as it is now is kept first.
+        if let reason = Self.checkpointReason(from: config, to: new) {
+            await autoCheckpoint(reason)
+            new.graphicsOverrides = config.graphicsOverrides
         }
         let old = config
         config = new
@@ -1023,6 +1032,15 @@ public actor DaemonCore {
                 throw AvoError.installFailed(String(localized: "Google apps are already being installed.", bundle: .avoKit))
             }
         }
+        // Android as it is without them, to go back to (they change its system partitions).
+        await autoCheckpoint(.googleApps)
+        guard cancelledGoogleApps.remove(request.id) == nil else {
+            publishGoogleApps(GoogleAppsProgress(id: request.id, phase: .cancelled, message: Self.googleAppsCancelledMessage))
+            throw AvoError.internalError(Self.googleAppsCancelledMessage)
+        }
+        guard googleAppsRun == nil else {
+            throw AvoError.installFailed(String(localized: "Google apps are already being installed.", bundle: .avoKit))
+        }
         let local = copy
         try await superviseGoogleApps(request.id, cancellable: true) { [weak self] report in
             guard let self else { return nil }
@@ -1074,6 +1092,8 @@ public actor DaemonCore {
             try await ensureRunning()
             guard googleAppsRun == nil else { throw AvoError.installFailed(Self.googleAppsBusyMessage) }
         }
+        await autoCheckpoint(.googleAppsRemoval)
+        guard googleAppsRun == nil else { throw AvoError.installFailed(Self.googleAppsBusyMessage) }
         do {
             try await superviseGoogleApps(id, cancellable: false, removal: true) { [weak self] report in
                 guard let installer = await self?.googleAppsInstaller(id, engine: engine, report: report) else { return nil }
@@ -1395,7 +1415,7 @@ public actor DaemonCore {
     }
 
     /// Saves a configuration the daemon changed itself and tells every watcher.
-    private func apply(_ new: VMConfig) {
+    func apply(_ new: VMConfig) {
         config = new
         try? new.save(to: deps.paths.config)
         publish(new)
@@ -2052,7 +2072,7 @@ extension DaemonCore {
     }
 
     /// Tells Control Panels where Android's data is now.
-    private func publishStorage() async {
+    func publishStorage() async {
         broadcast(.storageLocation(await storage.status()), to: isControlPanel)
     }
 

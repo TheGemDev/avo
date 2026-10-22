@@ -29,6 +29,17 @@ import IOSurface
     /// Wipes the user data disk (Sistem → Reset Android).
     func resetAndroid(reply: @escaping @Sendable (NSError?) -> Void)
 
+    // MARK: Checkpoints (Settings › Android › Checkpoints; Control Panel only)
+    /// Reply: JSON `CheckpointStatus`; changes follow as `DaemonEvent.checkpoints`.
+    func checkpoints(reply: @escaping @Sendable (Data?, NSError?) -> Void)
+    /// Makes a checkpoint of Android's apps and data now (`name` may be
+    /// empty), also while Android runs. Reply: JSON `Checkpoint`.
+    func createCheckpoint(_ name: String, reply: @escaping @Sendable (Data?, NSError?) -> Void)
+    /// Puts the checkpoint `id` (a UUID string) back: Android stops, its data
+    /// now is kept as a checkpoint first, and it starts again when it ran.
+    func restoreCheckpoint(_ id: String, reply: @escaping @Sendable (NSError?) -> Void)
+    func deleteCheckpoint(_ id: String, reply: @escaping @Sendable (NSError?) -> Void)
+
     // MARK: Where Android's data is (Settings › Storage › Location)
     /// Reply: JSON `StorageLocationStatus`.
     func storageLocation(reply: @escaping @Sendable (Data?, NSError?) -> Void)
@@ -555,6 +566,9 @@ public enum DaemonEvent: Codable, Sendable, Equatable {
     case storageLocation(StorageLocationStatus)
     /// A change of where Android's data is, as it goes (sent to Control Panels).
     case storageProgress(StorageChangeProgress)
+    /// Settings › Android › Checkpoints, when one is made, restored or
+    /// deleted (sent to Control Panels).
+    case checkpoints(CheckpointStatus)
     /// Where the engine keeps what Android plays, for screen recordings
     /// (CaptureAudio.swift): when it starts and when an App Shim connects
     /// (sent to App Shims).

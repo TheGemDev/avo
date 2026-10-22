@@ -129,6 +129,10 @@ final class ControlPanelModel {
     }
     /// A change of where Android's data is, as the daemon reports it.
     private(set) var storageProgress: StorageChangeProgress?
+    /// Settings › Android › Checkpoints (CheckpointViews.swift), nil until asked.
+    private(set) var checkpoints: CheckpointStatus?
+    /// A checkpoint is being made or restored (the buttons wait).
+    private(set) var checkpointWork: CheckpointWork?
     /// A Google apps install runs (Reset and Save Snapshot wait).
     var isInstallingGoogleApps: Bool { googleAppsProgress.map { !$0.isDone } ?? false }
     /// It is changing Android, which Avo restarts by itself meanwhile:
@@ -425,6 +429,8 @@ final class ControlPanelModel {
             Task { await refreshConfiguration() }
         case .storageProgress(let progress):
             storageProgress = progress
+        case .checkpoints(let status):
+            checkpoints = status
         case .systemActivity(let activity):
             systemStatus.receive(activity)
         default:
@@ -537,6 +543,50 @@ final class ControlPanelModel {
             } catch {
                 lastError = error.localizedDescription
             }
+            await refreshConfiguration()
+        }
+    }
+
+    // MARK: Checkpoints (Settings › Android › Checkpoints)
+
+    enum CheckpointWork { case creating, restoring }
+
+    func refreshCheckpoints() async {
+        if let status = try? await client?.checkpoints() { checkpoints = status }
+    }
+
+    func createCheckpoint(named name: String) {
+        performCheckpointWork(.creating) { _ = try await $0.createCheckpoint(named: name) }
+    }
+
+    /// Android restarts with the checkpoint's data when it runs; its apps follow then.
+    func restoreCheckpoint(_ checkpoint: Checkpoint) {
+        performCheckpointWork(.restoring) { try await $0.restoreCheckpoint(checkpoint.id) }
+    }
+
+    func deleteCheckpoint(_ checkpoint: Checkpoint) {
+        guard let client else { return }
+        Task {
+            do {
+                try await client.deleteCheckpoint(checkpoint.id)
+            } catch {
+                lastError = error.localizedDescription
+            }
+            await refreshCheckpoints()
+        }
+    }
+
+    private func performCheckpointWork(_ work: CheckpointWork, _ action: @escaping @Sendable (DaemonClient) async throws -> Void) {
+        guard let client, checkpointWork == nil else { return }
+        checkpointWork = work
+        Task {
+            do {
+                try await action(client)
+            } catch {
+                lastError = error.localizedDescription
+            }
+            checkpointWork = nil
+            await refreshCheckpoints()
             await refreshConfiguration()
         }
     }
