@@ -178,7 +178,14 @@ GLES 3.1 and Vulkan 1.3.
   Khronos Vulkan loader 1.4.365 and MoltenVK 1.4.0 (the release binary), in
   the emulator's layout (`lib64/`, `lib64/vulkan/`), its `source.properties`
   saying `Pkg.Desc=Avo GPU renderer…` and `Pkg.Revision=avo.N`, which keys
-  the shader cache. The daemon passes it unless
+  the shader cache. Avo's build carries two patches
+  (`scripts/gfxstream-patches`, tested by their `tests/run.sh`): a sequence
+  gate that keeps a guest process's commands in order, and can let go of
+  numbers guest threads took but never sent (`AVO_GFXSTREAM_SEQNO_SKIP_MS`,
+  0 by default, which never skips: Avo's guest layer keeps that deadlock
+  away, and a host too busy to take a sent number in time would run commands
+  out of order); and one that hides the linear ASTC sampling avo-vmm's layer
+  reports (below) from the guest. The daemon passes it unless
   `defaults write dev.avo.daemon AvoAndroidEmulator <dir>` names another; an
   Android Emulator 37 or later (`~/Library/Android/sdk/emulator`) is the
   fallback. avo-vmm loads `lib64/libgfxstream_backend.dylib` at run time by
@@ -220,8 +227,9 @@ GLES 3.1 and Vulkan 1.3.
   this apps got ES 2.0 contexts only. The layer takes the extension, its
   feature structure and the pipelines' provoking-vertex state out again
   before the driver sees them, so `flat` varyings come from a primitive's
-  first vertex instead of its last. Apps' own Vulkan instances do not see the
-  extension. Processes that start before HostAgent names the layer, every
+  first vertex instead of its last. Apps' own Vulkan instances see it too:
+  avo-vmm's layer (below) offers it to every instance. Processes that start
+  before HostAgent names the layer, every
   boot (SurfaceFlinger, system_server, SystemUI), stay at ES 2.0; they work
   with either. A software start removes the file: unnamed, libvulkan still
   opens every `libVkLayer*.so` in that folder in every app (userdebug), and
@@ -285,6 +293,14 @@ GLES 3.1 and Vulkan 1.3.
   memory. Checked against MoltenVK 1.4.0 directly: without the layer a 4x
   color image with ANGLE's usage finds no type; with it, type 0 allocates and
   binds.
+- **The guest layer's jobs on the Mac** (the same layer), for a guest that
+  runs without Avo's guest layer: it splits fragment output arrays, and it
+  offers `VK_EXT_provoking_vertex` (taken out again before MoltenVK) to every
+  instance, not only ANGLE's. The guest driver keeps the first extension list
+  it gets in a process, so when an app's own instance (or HWUI's) asked
+  first, ANGLE got that list and the app's GL stayed at OpenGL ES 2.0. An
+  app's own Vulkan that turns `provokingVertexLast` on gets flat varyings from
+  the first vertex, as ANGLE does; few apps do (console emulators, mostly).
 - **Frames**: on each flush the engine reads the composed buffer back into the
   same shared-memory frames as software (0.6–1.2 ms a frame measured at
   720×1280 and 1080×1920), so the daemon, MetalFX and recording are
