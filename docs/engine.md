@@ -588,7 +588,7 @@ daemon plays it over ADB (vsock 6520, root through `su` on userdebug):
   Android Studio see it as `emulator-5554` / `AVO_Droid`;
 - once per data disk: Wi-Fi on and joined to VirtWifi, media volume at full
   (the Mac's volume sets how loud), Thread off (no radio to simulate it),
-  Bluetooth off only without netsimd (below); every boot: UWB off (otherwise Android files a full bug
+  Bluetooth off only without a controller (below); every boot: UWB off (otherwise Android files a full bug
   report for the missing radio), the audio HAL without the MMAP and offload
   streams it only simulates and with 20 ms mixer periods ("Sound" above),
   multi audio focus on (every app keeps audio focus when another asks for it,
@@ -713,14 +713,21 @@ Google lets them sign in. A new data disk gets a new ID. The Play Store and
 the Google app are system apps, so Apps offers no Uninstall for them.
 
 **Bluetooth.** Cuttlefish's HCI HAL (`bt_hci`) speaks H4 on /dev/hvc5,
-where Cuttlefish's host runs Root Canal. With the Android Emulator installed,
-the daemon passes `--bluetooth <emulator>/netsimd` and avo-vmm starts that
-netsimd (Root Canal inside; `--hci-port` on a free local port, its files in
-`run/netsim`, its log in the instance's `netsimd.log`) and passes the bytes
-both ways between hvc5 and the port (`bluetooth.rs`). Android's Bluetooth
-turns on and scans, advertises and pairs inside netsim's virtual air.
-Without netsimd Android's Bluetooth has no controller, so the host agent
-turns it off once per data disk as before.
+where Cuttlefish's host runs Root Canal, a virtual controller. Avo brings
+its own: `scripts/build-bluetooth.sh` builds Root Canal from source
+(github.com/google/rootcanal, which follows AOSP's, at a pinned commit; with
+Bazel, Apple's C++ toolchain and unstripped Rust, for macOS 15 and later)
+into `build/bluetooth`, and Avo.app carries it in
+Contents/Resources/bluetooth (`AndroidEmulator.bluetoothController`; the
+Android Emulator's netsimd, Root Canal inside, only for a build without
+it). The daemon passes `--bluetooth <controller>` and avo-vmm starts it
+(`--hci_port` on a free local port, its other ports on free ones too; for
+netsimd its own flags; its files in `run/bluetooth`, its log in the
+instance's `bluetooth.log`) and passes the bytes both ways between hvc5 and
+the port (`bluetooth.rs`). Android's Bluetooth turns on and scans,
+advertises and pairs inside the controller's virtual air. Without a
+controller Android's Bluetooth has none, so the host agent turns it off
+once per data disk as before.
 
 The Mac's Bluetooth LE devices join that air (`MacBluetoothBridge`).
 macOS gives no app the HCI of its controller, so they come through
@@ -741,7 +748,8 @@ channels on a PSM are not offered. Classic Bluetooth (headsets, older
 controllers) has no way through. macOS asks for Bluetooth access the first
 time Android's Bluetooth is on (`NSBluetoothAlwaysUsageDescription`, in
 Avo.app and the daemon). `ProxyChipInNetsim` tests the chip against a real
-netsimd (`AVO_NETSIMD=…/netsimd swift test`).
+controller (`AVO_BLUETOOTH_CONTROLLER=build/bluetooth/rootcanal swift test`),
+and avo-vmm's `controller_starts_resets_and_stops` its bridge.
 
 **Cameras.** Settings › Devices › Cameras gives each of Android's cameras
 a source (`backCamera`, `frontCamera`; `CameraSource`): Emulated, None or
@@ -781,7 +789,7 @@ from the next start on.
 
 **Settings › Devices.** Wi-Fi (`wifiEnabled`: the host agent sets Android's switch at every start and on a change; off, Android is offline), Network speed (`networkSpeed`, the `network` command above) and the Mac's Bluetooth devices (`shareMacBluetooth`, MacBluetoothBridge) apply at once (`DeviceSettingsEngine`). Location moved here from Privacy & Security. Mobile data with a SIM, signal bars and the network type in Android's status bar go to the engine as the `cellular` command above (modem.rs).
 
-Each of the Mac's devices Android may use has a switch there; off, Android has no such hardware and Avo never asks macOS for it. Bluetooth (`bluetoothEnabled`) and Cameras (`camerasEnabled`) are plugged in at the start: off, avo-vmm runs without netsimd (the host agent turns Android's Bluetooth off at every start without a controller) or with `--cameras none`. The Microphone (`microphoneEnabled`, the `microphone` command above) and the Clipboard (`shareClipboard`: the daemon stops watching the Mac's pasteboard and passes nothing either way) follow at once; Location is the switch to share the Mac's location.
+Each of the Mac's devices Android may use has a switch there; off, Android has no such hardware and Avo never asks macOS for it. Bluetooth (`bluetoothEnabled`) and Cameras (`camerasEnabled`) are plugged in at the start: off, avo-vmm runs without a Bluetooth controller (the host agent turns Android's Bluetooth off at every start without one) or with `--cameras none`. The Microphone (`microphoneEnabled`, the `microphone` command above) and the Clipboard (`shareClipboard`: the daemon stops watching the Mac's pasteboard and passes nothing either way) follow at once; Location is the switch to share the Mac's location.
 
 **Root.** With `rooted` on (Settings › System › Developer), avo-vmm boots
 a Magisk-patched copy of the image's init_boot (`--init-boot`,

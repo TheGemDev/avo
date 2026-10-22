@@ -120,7 +120,7 @@ public final class VMMEngine: VMEngine, @unchecked Sendable {
     /// A reboot from inside Android (Restart, `adb reboot`) ends avo-vmm, and
     /// the daemon starts Android again: its start prepares every boot.
     public static func arguments(images: URL, launch: EngineLaunch, gpu: GPUPlan = .software(.chosen, nil),
-                                 netsimd: URL? = nil, initBoot: URL? = nil) -> [String] {
+                                 bluetooth: URL? = nil, initBoot: URL? = nil) -> [String] {
         let config = launch.config
         let paths = launch.paths
         var gpuFlags: [String] = []
@@ -140,7 +140,7 @@ public final class VMMEngine: VMEngine, @unchecked Sendable {
                 "--density", "\(config.bootDensity ?? 320)",
                 "--properties", identityFile(paths).path,
                 "--exit-on-reboot"] + gpuFlags + sharedFolderFlags(config) + refreshRateFlags(launch.displayRate)
-                + (netsimd.map { ["--bluetooth", $0.path] } ?? [])
+                + (bluetooth.map { ["--bluetooth", $0.path] } ?? [])
                 + (initBoot.map { ["--init-boot", $0.path] } ?? [])
                 + config.cameraFlags
                 + (config.microphoneEnabled ? [] : ["--no-microphone"])
@@ -220,12 +220,13 @@ public final class VMMEngine: VMEngine, @unchecked Sendable {
         process.executableURL = executable
         // The image of this start (CuttlefishImage.prepareStart): chosen in
         // the Control Panel, so it can differ from the one at daemon launch.
-        // Android's Bluetooth controller: the Android Emulator's netsimd, when
-        // there is one and Settings › Devices gives Android Bluetooth.
-        let netsimd = launch.config.bluetoothEnabled ? AndroidEmulator.netsimd(home: launch.paths.home) : nil
+        // Android's Bluetooth controller (Avo's Root Canal), when Settings ›
+        // Devices gives Android Bluetooth.
+        let bluetooth = launch.config.bluetoothEnabled
+            ? AndroidEmulator.bluetoothController(engine: executable, home: launch.paths.home) : nil
         // Root: Magisk's init_boot, once one was made for this image (MagiskRoot).
         let initBoot = launch.config.rooted ? MagiskRoot.patchedImage(for: launch.image, paths: launch.paths) : nil
-        process.arguments = Self.arguments(images: launch.image.directory, launch: launch, gpu: plan, netsimd: netsimd,
+        process.arguments = Self.arguments(images: launch.image.directory, launch: launch, gpu: plan, bluetooth: bluetooth,
                                            initBoot: initBoot)
         let monitor = plan.isGPU ? GPUBootMonitor() : nil
         lock.withLock { self.gpuMonitor = monitor }
@@ -313,7 +314,7 @@ public final class VMMEngine: VMEngine, @unchecked Sendable {
         await agent.forwardScreenLock { screenLockSink.yield($0) }
         await agent.shareFolder(Self.sharedFolderFlags(launch.config).last.map { URL(filePath: $0, directoryHint: .isDirectory) })
         await agent.useDisplayRate(launch.displayRate)
-        await agent.useBluetooth(netsimd != nil)
+        await agent.useBluetooth(bluetooth != nil)
         // Whether Android has Avo's Vulkan driver wrapper, for the next start's failures.
         await agent.noteVulkanWrapper { [paths = launch.paths] in GuestVulkanWrapper.noteInstalled($0, paths: paths) }
         await agent.applyDeviceSettings(wifi: launch.config.wifiEnabled, shareMacBluetooth: launch.config.shareMacBluetooth,

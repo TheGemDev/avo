@@ -195,10 +195,10 @@
 		9B5483BA2FEF5F7A9BECF5F2 /* Embed Dependencies */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = Contents/Library/Helpers;
-			dstSubfolderSpec = 1;
+			dstPath = "";
+			dstSubfolderSpec = 6;
 			files = (
-				47016DFED92044DBDCC83456 /* AvoDaemon.app in Embed Dependencies */,
+				3B17A894C265E7F52B64E424 /* avoctl in Embed Dependencies */,
 			);
 			name = "Embed Dependencies";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -206,10 +206,10 @@
 		C7672177C149A74FB486AFCE /* Embed Dependencies */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 6;
+			dstPath = Contents/Library/Helpers;
+			dstSubfolderSpec = 1;
 			files = (
-				3B17A894C265E7F52B64E424 /* avoctl in Embed Dependencies */,
+				47016DFED92044DBDCC83456 /* AvoDaemon.app in Embed Dependencies */,
 			);
 			name = "Embed Dependencies";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -658,6 +658,7 @@
 				9B5483BA2FEF5F7A9BECF5F2 /* Embed Dependencies */,
 				0DF9162A1C0539A6B7AA1B4F /* Build avo-vmm */,
 				4985470071A358EF376C36F2 /* Embed the GPU renderer */,
+				074121D49DF3337DB2103F1A /* Embed the Bluetooth controller */,
 			);
 			buildRules = (
 			);
@@ -865,6 +866,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		074121D49DF3337DB2103F1A /* Embed the Bluetooth controller */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed the Bluetooth controller";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\nCONTROLLER=\"$SRCROOT/../build/bluetooth\"\nOUT=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/bluetooth\"\nif [ ! -f \"$CONTROLLER/.stamp\" ]; then\n  echo \"warning: no Bluetooth controller in build/bluetooth (run scripts/build-bluetooth.sh); Avo.app then needs the Android Emulator for Bluetooth\"\n  exit 0\nfi\n# Nothing to do when the controller did not change: Avo.app stays sealed.\nif [ -f \"$OUT/.stamp\" ] && cmp -s \"$CONTROLLER/.stamp\" \"$OUT/.stamp\"; then\n  exit 0\nfi\nrm -rf \"$OUT.new\"\nditto \"$CONTROLLER\" \"$OUT.new\"\ncodesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" \"$OUT.new/rootcanal\"\n# Replace, never overwrite: a running avo-vmm may have started it.\nrm -rf \"$OUT\"\nmv \"$OUT.new\" \"$OUT\"\nif codesign --display \"$TARGET_BUILD_DIR/$WRAPPER_NAME\" >/dev/null 2>&1; then\n  codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" \\\n    --preserve-metadata=identifier,entitlements,requirements,flags,runtime \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\nfi\n";
+		};
 		0DF9162A1C0539A6B7AA1B4F /* Build avo-vmm */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

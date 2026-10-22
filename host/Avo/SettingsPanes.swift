@@ -511,7 +511,7 @@ struct SystemPane: View {
             Section("Bluetooth") {
                 Toggle(isOn: Binding(get: { config.bluetoothEnabled }, set: { value in model.update { $0.bluetoothEnabled = value } })) {
                     HelpTitle("Bluetooth") {
-                        Text("Android has Bluetooth: its apps scan, connect and pair as on a phone. It needs the Android Emulator (Android Studio’s SDK Manager installs it).")
+                        Text("Android has Bluetooth: its apps can turn it on, scan and connect, as on a phone. The devices it finds are the ones this Mac shares, below.")
                         Text("Off, Android has no Bluetooth, and Avo never uses the Mac’s. Applies when Android restarts.")
                     }
                 }
@@ -522,7 +522,6 @@ struct SystemPane: View {
                             Text("Headsets and other classic Bluetooth devices, and pairing, are not supported yet.")
                         }
                     }
-                    RestartNote(text: "Android’s Bluetooth needs the Android Emulator (Android Studio’s SDK Manager installs it); without it, Bluetooth stays off in Android.")
                 }
             }
             .shown(sections.contains(.bluetooth))

@@ -70,9 +70,22 @@ public struct AndroidEmulator: Equatable, Sendable {
             .appending(path: "Resources/gfxstream", directoryHint: .isDirectory)
     }
 
-    /// The emulator's netsimd (Root Canal inside), Android's Bluetooth
-    /// controller (`--bluetooth`, engine/hvf/vmm/src/bluetooth.rs). Any
-    /// version will do: avo-vmm only uses its HCI port.
+    /// Android's Bluetooth controller (`--bluetooth`,
+    /// engine/hvf/vmm/src/bluetooth.rs): Avo's own Root Canal, in Avo.app
+    /// next to avo-vmm (`engine`), Contents/Resources/bluetooth/rootcanal
+    /// (scripts/build-bluetooth.sh); else, for a build without it, the
+    /// emulator's netsimd (Root Canal inside). avo-vmm only uses its HCI port.
+    public static func bluetoothController(engine: URL?, home: URL,
+                                           override: String? = UserDefaults.standard.string(forKey: "AvoAndroidEmulator")) -> URL? {
+        if let engine {
+            let rootcanal = engine.deletingLastPathComponent().deletingLastPathComponent()
+                .appending(path: "Resources/bluetooth/rootcanal")
+            if FileManager.default.isExecutableFile(atPath: rootcanal.path) { return rootcanal }
+        }
+        return netsimd(home: home, override: override)
+    }
+
+    /// The emulator's netsimd (Root Canal inside). Any version will do.
     public static func netsimd(home: URL,
                                override: String? = UserDefaults.standard.string(forKey: "AvoAndroidEmulator")) -> URL? {
         let directory = override.flatMap { $0.isEmpty ? nil : URL(filePath: $0, directoryHint: .isDirectory) }
