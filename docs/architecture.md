@@ -444,8 +444,17 @@ Android; Swipe mode turns its pages when a burst's drag passes the middle.
 Each app resolves its graphics settings from two profiles in `VMConfig`,
 Apps (`appGraphics`) and Games (`gameGraphics`), plus a sparse per-app
 override (`graphicsOverrides`) that holds only the fields the user changed.
-An app is a game when the user chose so or it has a usable key mapping
-(`KeymapProfile.usable`). The shared math is in AvoKit's `DisplaySizing`,
+An app is a game when the user chose so, it has a usable key mapping
+(`KeymapProfile.usable`), or it says it is one: its manifest's
+`android:appCategory="game"` or the older `android:isGame`, which the helper's
+`appinfo` reads from Android (`AppInfo.game`, kept as `AppRecord.isGame`; an
+APK read on the Mac or a bare listing leaves what Android said). App Shims
+learn it from the configuration snapshot's `games`. Such a game keeps the
+Games profile's performance settings but opens in the orientation its
+activities ask for (`AppInfo.orientation`: the launcher activity's
+`screenOrientation`, else the one its activities agree on; kept as
+`AppRecord.orientation`, `gameOrientations` in the snapshot), so a portrait
+game is not turned; one that lets the screen turn takes the profile's. The shared math is in AvoKit's `DisplaySizing`,
 so the window, touches and the renderer always agree.
 
 Android's screen (`GraphicsSettings.mode`, Screen size: Window, Fixed or Phone) is sized one of three ways:

@@ -316,12 +316,12 @@ private struct AppGraphicsCard: View {
                 let settings = resolved.settings
                 let mode = settings.effectiveMode(device: model.deviceProfile?.display)
                 // The profile the app's graphics start from, switched right here.
-                let automatic: GraphicsProfile = model.hasKeyMapping(app.package) ? .games : .apps
+                let automatic: GraphicsProfile = model.hasKeyMapping(app.package) || model.listedAsGame(app.package) ? .games : .apps
                 HazeRows {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 4) {
                             Text("Preset").font(.mona(12)).foregroundStyle(Haze.textTertiary)
-                            HelpButton("Preset", "Apps and Games are the two presets in Settings › Graphics. Avo picks one by itself (an app with key mapping is a game); the changes made on this page stay on top of either.")
+                            HelpButton("Preset", "Apps and Games are the two presets in Settings › Graphics. Avo picks one by itself (an app with key mapping, or one Android lists as a game, is a game); the changes made on this page stay on top of either.")
                         }
                         HazeSegmented(options: [(GraphicsProfile.apps, Text("Apps")), (GraphicsProfile.games, Text("Games"))],
                                       selection: Binding(get: { resolved.profile }, set: { choice in

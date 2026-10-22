@@ -47,7 +47,7 @@ struct AppGraphicsForm: View {
 
     private var override: AppGraphicsOverride? { model.config?.graphicsOverrides[app.package] }
     /// The profile Avo picks when the app chose none.
-    private var automatic: GraphicsProfile { model.hasKeyMapping(app.package) ? .games : .apps }
+    private var automatic: GraphicsProfile { model.hasKeyMapping(app.package) || model.listedAsGame(app.package) ? .games : .apps }
 
     var body: some View {
         if let config = model.config, let resolved = model.graphics(for: app.package) {
@@ -104,6 +104,7 @@ struct AppGraphicsForm: View {
     private func reason(_ reason: ResolvedGraphics.Reason) -> LocalizedStringKey {
         switch reason {
         case .keyMapping: "Avo uses game settings because this app has a key mapping."
+        case .androidGame: "Avo uses game settings because the app says it is a game."
         case .none: "Avo uses the same settings as other apps."
         case .chosen: "You chose this for this app."
         }
@@ -122,9 +123,8 @@ extension ControlPanelModel {
     /// Library's graphics card both write through here).
     func setAppGraphicsSettings(_ settings: GraphicsSettings, for package: String) {
         guard let config, let resolved = graphics(for: package) else { return }
-        let base = config.settings(for: resolved.profile)
         setAppGraphics(AppGraphicsOverride(profile: config.graphicsOverrides[package]?.profile,
-                                           changes: .difference(settings, from: base)), for: package)
+                                           changes: .difference(settings, from: resolved.base)), for: package)
     }
 }
 

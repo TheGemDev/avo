@@ -2354,12 +2354,12 @@
         }
       }
     },
-    "Apps and Games are the two presets in Settings › Graphics. Avo picks one by itself (an app with key mapping is a game); the changes made on this page stay on top of either." : {
+    "Apps and Games are the two presets in Settings › Graphics. Avo picks one by itself (an app with key mapping, or one Android lists as a game, is a game); the changes made on this page stay on top of either." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikasi dan Game adalah dua preset di Pengaturan › Grafis. Avo memilih salah satunya sendiri (aplikasi yang punya pemetaan tombol dianggap game); perubahan di halaman ini tetap berlaku di atas keduanya."
+            "value" : "Aplikasi dan Game adalah dua preset di Pengaturan › Grafis. Avo memilih salah satunya sendiri (aplikasi yang punya pemetaan tombol, atau yang dicatat Android sebagai game, dianggap game); perubahan di halaman ini tetap berlaku di atas keduanya."
           }
         }
       }
@@ -2863,6 +2863,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avo memberi tahu aplikasi siapa dirinya: perangkat buatan Avo, model AVO-Droid, yang berjalan di Mac. Game bisa mengenalinya dan memperlakukannya seperti PC."
+          }
+        }
+      }
+    },
+    "Avo uses game settings because the app says it is a game." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avo memakai pengaturan game karena aplikasi ini menyatakan dirinya game."
           }
         }
       }

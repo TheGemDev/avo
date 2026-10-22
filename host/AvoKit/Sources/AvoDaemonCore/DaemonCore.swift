@@ -713,11 +713,16 @@ public actor DaemonCore {
         case .listening(let port): ADBStatus(port: port)
         case let .failed(port, problem): ADBStatus(port: port, problem: problem)
         }
+        let games = await registry.all().filter { $0.isGame == true }
         return ConfigurationSnapshot(config: config, host: deps.host, profiles: deps.profiles.profiles,
                                      pendingRestart: (bootedConfig.map { config.effect(of: $0) == .restartRequired } ?? false)
                                          || frameRateNeedsRestart(config.fpsLimit),
                                      adb: adbStatus, dataDisk: await dataDiskStatus(), storageLocation: await storage.status(),
-                                     sharedFolder: await sharedFolderStatus())
+                                     sharedFolder: await sharedFolderStatus(),
+                                     games: Set(games.map(\.package)),
+                                     gameOrientations: Dictionary(uniqueKeysWithValues: games.compactMap { app in
+                                         app.orientation.map { (app.package, $0) }
+                                     }))
     }
 
     public func updateConfiguration(_ new: VMConfig, client: ClientID) async throws -> ConfigUpdateResult {

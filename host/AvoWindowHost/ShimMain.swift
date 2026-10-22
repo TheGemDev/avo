@@ -51,6 +51,10 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
     /// shim, and refused ("The caller is not allowed…").
     private var connected = false
     private(set) var config = VMConfig()
+    /// Android lists this app as a game: its windows use the Games profile by default.
+    private(set) var isGame = false
+    /// The orientation such a game asks for, which its windows open in.
+    private(set) var orientation: VMConfig.Orientation?
     /// The device profiles (they never change while the daemon runs): the
     /// chosen one's screen is what "Phone's screen" gives Android.
     private(set) var profiles: [DeviceProfile] = []
@@ -90,6 +94,8 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
                 if let snapshot = try? await client.configuration() {
                     config = snapshot.config
                     profiles = snapshot.profiles
+                    isGame = snapshot.games?.contains(package) == true
+                    orientation = snapshot.gameOrientations?[package]
                 }
                 ShimFingerprints.shared.connect(client)
                 LocationModel.shared.connect(client)
@@ -269,9 +275,12 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
             target?.showNotice(failure(problem))
             guard let snapshot = try? await client?.configuration() else { return }
             let before = config
+            let wasGame = (isGame: isGame, orientation: orientation)
             config = snapshot.config
             profiles = snapshot.profiles
-            for window in windows { window.configurationChanged(from: before, immediate: true) }
+            isGame = snapshot.games?.contains(package) == true
+            orientation = snapshot.gameOrientations?[package]
+            for window in windows { window.configurationChanged(from: before, immediate: true, wasGame: wasGame) }
         }
     }
 

@@ -4111,6 +4111,16 @@
         }
       }
     },
+    "Preset: Games (listed as a game)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset: Game (tercatat sebagai game)"
+          }
+        }
+      }
+    },
     "Presets" : {
       "localizations" : {
         "id" : {
