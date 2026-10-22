@@ -123,9 +123,8 @@ extension ControlPanelModel {
     /// Library's graphics card both write through here).
     func setAppGraphicsSettings(_ settings: GraphicsSettings, for package: String) {
         guard let config, let resolved = graphics(for: package) else { return }
-        let base = config.settings(for: resolved.profile)
         setAppGraphics(AppGraphicsOverride(profile: config.graphicsOverrides[package]?.profile,
-                                           changes: .difference(settings, from: base)), for: package)
+                                           changes: .difference(settings, from: resolved.base)), for: package)
     }
 }
 

@@ -343,7 +343,8 @@ public struct ResolvedGraphics: Equatable, Sendable {
         case chosen
         /// Games, because the app has a usable key mapping.
         case keyMapping
-        /// Games, because the app says it is one (its manifest's category).
+        /// Games, because the app says it is one (its manifest's category),
+        /// turned to the orientation the app asks for.
         case androidGame
         /// Apps: nothing chose otherwise.
         case none
@@ -352,14 +353,20 @@ public struct ResolvedGraphics: Equatable, Sendable {
     public var settings: GraphicsSettings
     public var profile: GraphicsProfile
     public var reason: Reason
-    /// What this app changes on top of `profile` (empty when nothing).
+    /// What this app changes on top of `base` (empty when nothing).
     public var changes: GraphicsSettingsPatch
+    /// What `changes` apply to: `profile`'s settings, in the app's own
+    /// orientation when Android's word chose Games (`androidGame`).
+    public var base: GraphicsSettings
 
-    public init(settings: GraphicsSettings, profile: GraphicsProfile, reason: Reason, changes: GraphicsSettingsPatch) {
+    /// `base`: `settings` when nil (no changes).
+    public init(settings: GraphicsSettings, profile: GraphicsProfile, reason: Reason, changes: GraphicsSettingsPatch,
+                base: GraphicsSettings? = nil) {
         self.settings = settings
         self.profile = profile
         self.reason = reason
         self.changes = changes
+        self.base = base ?? settings
     }
 }
 
@@ -402,8 +409,13 @@ extension VMConfig {
     /// (`KeymapProfile.usable(for:bundledDirectory:)`), else Apps; then the
     /// override's changes on top.
     /// `isGame`: Android lists the app as a game (AppRecord.isGame); a key
-    /// mapping, and the user's choice before it, come first.
-    public func graphics(for package: String, hasKeyMapping: Bool, isGame: Bool = false) -> ResolvedGraphics {
+    /// mapping, and the user's choice before it, come first. Such a game
+    /// keeps the Games profile's performance settings but opens in
+    /// `orientation`, the one it asks for (AppRecord.orientation), so a
+    /// portrait game is not turned; one that lets the screen turn takes the
+    /// profile's.
+    public func graphics(for package: String, hasKeyMapping: Bool, isGame: Bool = false,
+                         orientation: VMConfig.Orientation? = nil) -> ResolvedGraphics {
         let override = graphicsOverrides[package]
         let profile: GraphicsProfile
         let reason: ResolvedGraphics.Reason
@@ -420,8 +432,10 @@ extension VMConfig {
             profile = .apps
             reason = ResolvedGraphics.Reason.none
         }
+        var base = settings(for: profile)
+        if reason == .androidGame, let orientation { base.orientation = orientation }
         let changes = override?.changes ?? GraphicsSettingsPatch()
-        return ResolvedGraphics(settings: changes.applied(to: settings(for: profile)), profile: profile, reason: reason, changes: changes)
+        return ResolvedGraphics(settings: changes.applied(to: base), profile: profile, reason: reason, changes: changes, base: base)
     }
 
     /// Display 0's density at boot. Nobody sees display 0, but Android sizes

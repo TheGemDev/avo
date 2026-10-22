@@ -49,6 +49,8 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
     private(set) var config = VMConfig()
     /// Android lists this app as a game: its windows use the Games profile by default.
     private(set) var isGame = false
+    /// The orientation such a game asks for, which its windows open in.
+    private(set) var orientation: VMConfig.Orientation?
     /// The device profiles (they never change while the daemon runs): the
     /// chosen one's screen is what "Phone's screen" gives Android.
     private(set) var profiles: [DeviceProfile] = []
@@ -84,6 +86,7 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
                     config = snapshot.config
                     profiles = snapshot.profiles
                     isGame = snapshot.games?.contains(package) == true
+                    orientation = snapshot.gameOrientations?[package]
                 }
                 ShimFingerprints.shared.connect(client)
                 LocationModel.shared.connect(client)
@@ -262,6 +265,7 @@ final class ShimAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidati
             config = snapshot.config
             profiles = snapshot.profiles
             isGame = snapshot.games?.contains(package) == true
+            orientation = snapshot.gameOrientations?[package]
             for window in windows { window.configurationChanged(from: before, immediate: true) }
         }
     }

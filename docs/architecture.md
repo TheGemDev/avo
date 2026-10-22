@@ -353,7 +353,12 @@ An app is a game when the user chose so, it has a usable key mapping
 `android:appCategory="game"` or the older `android:isGame`, which the helper's
 `appinfo` reads from Android (`AppInfo.game`, kept as `AppRecord.isGame`; an
 APK read on the Mac or a bare listing leaves what Android said). App Shims
-learn it from the configuration snapshot's `games`. The shared math is in AvoKit's `DisplaySizing`,
+learn it from the configuration snapshot's `games`. Such a game keeps the
+Games profile's performance settings but opens in the orientation its
+activities ask for (`AppInfo.orientation`: the launcher activity's
+`screenOrientation`, else the one its activities agree on; kept as
+`AppRecord.orientation`, `gameOrientations` in the snapshot), so a portrait
+game is not turned; one that lets the screen turn takes the profile's. The shared math is in AvoKit's `DisplaySizing`,
 so the window, touches and the renderer always agree.
 
 Android's screen (`GraphicsSettings.mode`) is sized one of three ways:

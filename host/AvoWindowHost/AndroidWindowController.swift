@@ -212,7 +212,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
 
         // The first window: the default size, turned to the app's orientation.
         let config = app.config
-        let orientation = config.graphics(for: app.package, hasKeyMapping: hasKeyMapping, isGame: app.isGame).settings.orientation
+        let orientation = config.graphics(for: app.package, hasKeyMapping: hasKeyMapping, isGame: app.isGame,
+                                          orientation: app.orientation).settings.orientation
         var size = config.defaultWindowSize
         if (orientation == .landscape) != (size.width > size.height) { size = size.rotated }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: size.width, height: size.height),
@@ -1058,7 +1059,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// key mapping) with its own changes on top.
     private var graphics: ResolvedGraphics {
         guard let app else { return ResolvedGraphics(settings: .appsDefault, profile: .apps, reason: .none, changes: .init()) }
-        return app.config.graphics(for: app.package, hasKeyMapping: hasKeyMapping, isGame: app.isGame)
+        return app.config.graphics(for: app.package, hasKeyMapping: hasKeyMapping, isGame: app.isGame,
+                                   orientation: app.orientation)
     }
 
     /// The device profile's screen, which the phone's-screen mode gives Android.
@@ -1145,7 +1147,8 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
             applyHUDLevel()
         }
         if old.fpsLimit != app.config.fpsLimit { frameRateHint.setCap(app.config.fpsLimit) }
-        let before = old.graphics(for: app.package, hasKeyMapping: hasKeyMapping, isGame: app.isGame)
+        let before = old.graphics(for: app.package, hasKeyMapping: hasKeyMapping, isGame: app.isGame,
+                                  orientation: app.orientation)
         // The phone's screen is the device profile's: choosing another one changes it.
         let phoneChanged = old.deviceDisplay(in: app.profiles) != deviceDisplay
             && (before.settings.mode == .deviceProfile || graphics.settings.mode == .deviceProfile)
@@ -1283,7 +1286,7 @@ final class AndroidWindowController: NSWindowController, NSWindowDelegate, NSMen
         var settings = resolved.settings
         change(&settings)
         var override = app.config.graphicsOverrides[app.package] ?? AppGraphicsOverride()
-        override.changes = GraphicsSettingsPatch.difference(settings, from: app.config.settings(for: resolved.profile))
+        override.changes = GraphicsSettingsPatch.difference(settings, from: resolved.base)
         saveGraphics(override)
     }
 

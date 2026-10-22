@@ -264,6 +264,10 @@ message AppInfo {
   // older isGame). Unset when Android was not asked (read from the APK, or
   // only listed).
   optional bool game = 13;
+  // The orientation the app's activities ask for (their screenOrientation),
+  // set along with `game`: portrait or landscape, unspecified when they let
+  // the screen turn (or Android was not asked).
+  Orientation orientation = 14;
 }
 
 message AppInstalled {

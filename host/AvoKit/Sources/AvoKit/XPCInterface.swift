@@ -331,10 +331,13 @@ public struct ConfigurationSnapshot: Codable, Sendable {
     /// The apps Android lists as games (AppRecord.isGame), for the App
     /// Shims' graphics (nil from an older daemon).
     public var games: Set<String>?
+    /// The orientation each of `games` asks for (AppRecord.orientation),
+    /// when it asks for one.
+    public var gameOrientations: [String: VMConfig.Orientation]?
 
     public init(config: VMConfig, host: HostInfo, profiles: [DeviceProfile], pendingRestart: Bool, adb: ADBStatus? = nil,
                 dataDisk: DataDiskStatus? = nil, storageLocation: StorageLocationStatus? = nil, sharedFolder: SharedFolderStatus? = nil,
-                games: Set<String>? = nil) {
+                games: Set<String>? = nil, gameOrientations: [String: VMConfig.Orientation]? = nil) {
         self.config = config
         self.host = host
         self.profiles = profiles
@@ -344,6 +347,7 @@ public struct ConfigurationSnapshot: Codable, Sendable {
         self.storageLocation = storageLocation
         self.sharedFolder = sharedFolder
         self.games = games
+        self.gameOrientations = gameOrientations
     }
 }
 

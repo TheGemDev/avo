@@ -1768,6 +1768,8 @@ actor HostAgent: DisplayResizing {
         var foregroundPng: Data?
         /// The app says it is a game (absent from an older helper).
         var game: Bool?
+        /// "portrait" or "landscape": what its activities ask for (absent when they let the screen turn).
+        var orientation: String?
         /// Android could not describe the package (not installed, not visible).
         var error: String?
     }
@@ -1853,7 +1855,14 @@ actor HostAgent: DisplayResizing {
         if let bytes = report.sizeBytes, bytes > 0 { info.sizeBytes = bytes }
         if let time = report.firstInstallTime, time > 0 { info.firstInstallTimeMs = time }
         if let time = report.lastUpdateTime, time > 0 { info.lastUpdateTimeMs = time }
-        if let game = report.game { info.game = game }
+        if let game = report.game {
+            info.game = game
+            info.orientation = switch report.orientation {
+            case "portrait": .portrait
+            case "landscape": .landscape
+            default: .unspecified
+            }
+        }
         let backgroundImage = report.backgroundPng.flatMap(MacIconRenderer.image(from:))
         let foregroundImage = report.foregroundPng.flatMap(MacIconRenderer.image(from:))
         let background = report.backgroundColor.map { MacIconRenderer.Layer.color(MacIconRenderer.color(argb: $0)) }
