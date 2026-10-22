@@ -137,6 +137,7 @@
 		F240F02DAB0D7C254BD606D6 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 20EE5C5D0BA49AF0A56C43A9 /* Localizable.xcstrings */; };
 		F2C61EA7D38664A42D4CF16B /* FingerprintsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F288F116C105C8008B31139 /* FingerprintsPane.swift */; };
 		F691FF3BEFFD48314FC84EC7 /* PictureInPictureWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D936C74814C5B26B85DE5863 /* PictureInPictureWindow.swift */; };
+		F74B91D0AAD65DD61BD9BB00 /* WindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830E78F375BA121F14BD1E70 /* WindowChrome.swift */; };
 		FBAA61DF267ED3B773BEB75B /* GraphicsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB753E2158DC17A4E034C9B1 /* GraphicsMenu.swift */; };
 		FCE84B743F1B4CCB9BED05E5 /* LibrarySidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BC11CE910091D745949D83 /* LibrarySidebar.swift */; };
 		FD59002EC07344DEA7B5FDAA /* ReportProblem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F7E2A3C00C21BDBF58BE20 /* ReportProblem.swift */; };
@@ -301,6 +302,7 @@
 		8013D3F2A040EAA894360D64 /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
 		801D5BA6131483549457E5CD /* LibraryWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryWindow.swift; sourceTree = "<group>"; };
 		80402279174CF43A99B84FE9 /* SetupCarriedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupCarriedData.swift; sourceTree = "<group>"; };
+		830E78F375BA121F14BD1E70 /* WindowChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowChrome.swift; sourceTree = "<group>"; };
 		86BC0FB987CE432E759E1499 /* OFL-MonaSans.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-MonaSans.txt"; sourceTree = "<group>"; };
 		8B51354EC56633B01822C753 /* mona-sans.woff2 */ = {isa = PBXFileReference; path = "mona-sans.woff2"; sourceTree = "<group>"; };
 		8BC81EDA9B2997933033B2D0 /* FrameRateHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRateHint.swift; sourceTree = "<group>"; };
@@ -629,6 +631,7 @@
 				4BD8108EF46DAE00801D9C67 /* SpatialUpscaler.swift */,
 				BF22EB11A4CB702484B63BA7 /* WheelScrolling.swift */,
 				757FE7FE5E8552F4983486D2 /* WidgetPanels.swift */,
+				830E78F375BA121F14BD1E70 /* WindowChrome.swift */,
 			);
 			path = AvoWindowHost;
 			sourceTree = "<group>";
@@ -966,6 +969,7 @@
 				503949AFD1AAE5E77994DA66 /* SpatialUpscaler.swift in Sources */,
 				12B4999A17C07FA0376DF28D /* WheelScrolling.swift in Sources */,
 				18D8B4E25D143F13C679325F /* WidgetPanels.swift in Sources */,
+				F74B91D0AAD65DD61BD9BB00 /* WindowChrome.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

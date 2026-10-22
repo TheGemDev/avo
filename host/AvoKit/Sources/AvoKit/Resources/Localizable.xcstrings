@@ -2273,12 +2273,12 @@
         }
       }
     },
-    "The engine’s log and the end of Android’s kernel log" : {
+    "The engine’s logs (the Bluetooth controller’s too) and the end of Android’s kernel log" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Log mesin VM dan bagian akhir log kernel Android"
+            "value" : "Log mesin VM (termasuk pengendali Bluetooth) dan bagian akhir log kernel Android"
           }
         }
       }

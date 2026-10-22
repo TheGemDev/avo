@@ -54,7 +54,7 @@ struct AppGraphicsForm: View {
             Form {
                 Section {
                     LabeledContent {
-                        HazePicker("Based on", selection: Binding(get: { resolved.profile }, set: { choice in
+                        HazePicker("Preset", selection: Binding(get: { resolved.profile }, set: { choice in
                             // The app keeps what it changed, minus what the new
                             // profile already has: such a field would only pin
                             // it against later edits of that profile.
@@ -68,7 +68,7 @@ struct AppGraphicsForm: View {
                         }
                     } label: {
                         // The menu says "(automatic)"; why is the help.
-                        HelpTitle("Based on", help: reason(resolved.reason))
+                        HelpTitle("Preset", help: reason(resolved.reason))
                     }
                 }
                 Section {
@@ -112,7 +112,7 @@ struct AppGraphicsForm: View {
 
 extension ControlPanelModel {
     /// The device profile chosen in Settings › Privacy & Security; its
-    /// screen is what "Phone’s screen" gives Android (none for Avo's own).
+    /// screen is what Screen size "Phone" gives Android (none for Avo's own).
     var deviceProfile: DeviceProfile? {
         config.flatMap { config in profiles.first { $0.id == config.deviceProfileID } }
     }

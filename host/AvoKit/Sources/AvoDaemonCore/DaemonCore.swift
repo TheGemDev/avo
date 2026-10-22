@@ -96,6 +96,8 @@ public actor DaemonCore {
         var ready = false
         /// False while the window is minimized or hidden.
         var visible = true
+        /// Its app runs in the background (the blue light): hidden on purpose.
+        var inBackground = false
     }
 
     let deps: Dependencies
@@ -295,6 +297,9 @@ public actor DaemonCore {
         for display in displays.values {
             if display.visible {
                 result[display.package] = .open
+            } else if display.inBackground {
+                // Sent to the background on purpose (a window's blue light): not minimized.
+                if result[display.package] == nil { result[display.package] = .background }
             } else if result[display.package] != .open {
                 result[display.package] = .minimized
             }
@@ -1525,6 +1530,12 @@ public actor DaemonCore {
         request.displayID = id
         request.visible = visible
         _ = try? await vm.controlSession().request(.setDisplayVisibility(request))
+    }
+
+    public func setDisplayInBackground(_ id: UInt32, inBackground: Bool, client: ClientID) async {
+        guard ownedDisplay(id, by: client) != nil else { return }
+        displays[id]?.inBackground = inBackground
+        publishActivity()
     }
 
     /// The window became the Mac's key window (Avo_V1_FocusDisplay). The

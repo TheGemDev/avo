@@ -485,6 +485,10 @@ final class ClientConnection: NSObject, AvoDaemonXPC, @unchecked Sendable {
         Task { [self] in await core.setDisplayVisible(displayID, visible: visible, client: id) }
     }
 
+    func setDisplayInBackground(_ displayID: UInt32, inBackground: Bool) {
+        Task { [self] in await core.setDisplayInBackground(displayID, inBackground: inBackground, client: id) }
+    }
+
     func focusDisplay(_ displayID: UInt32) {
         Task { [self] in await core.focusDisplay(displayID, client: id) }
     }

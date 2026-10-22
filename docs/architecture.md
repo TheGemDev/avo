@@ -269,16 +269,82 @@ top, shown while the pointer is over the panel, moves it and has Back to
 Window and Close (a double-click goes back too); the Dock icon, the menu item
 and Android's screen lock bring the window back. Whether Android sees the
 display follows the panel then, not the hidden window. Chosen in full screen,
-it opens once full screen has ended.
+it opens once full screen has ended. Its ✕ quits the app, as the red light
+does, and says so ("Quit PUBG MOBILE").
 
-The title bar has Back, then menus of the menu bar's actions: the game
+Closing a game's window ends the game in Android, and one wrong click must
+not end a match: the red light, Close Window (⌘W) and Picture in Picture's ✕
+ask first (`windowShouldClose`, `askToQuit`) while Android runs a game (the
+Games preset or a key mapping): Quit, Run in Background or Cancel, with
+Don't Ask Again. That is every app's setting (`QuitSettings` in the Window
+Host's defaults), also Settings › Graphics › App windows › Ask before
+quitting a game. Quitting the app (⌘Q) and closes Android asks for never ask.
+
+The window's own three lights have a fourth after them, blue: Run in
+Background (`BackgroundLightButton`, also Window › Run in Background). It is
+the system's own red light turned blue: a new close widget
+(`NSWindow.standardWindowButton(_:for:)`) draws each look for a moment
+inside the button, as it is and pressed, whenever the window comes to the
+front or goes to the back or the appearance changes, and the button shows
+that picture with every coloured pixel's hue made macOS's blue. So it has
+the lights' fill, shine, pressed look and back-window gray, in their row
+(the title bar's sides are as tall as the title bar, their buttons on the
+lights' middle) and 23 points after the green one, as they are apart. A
+fresh widget each time: one that has drawn a look may still draw it a
+moment after it changed. Its glyph shows while the pointer is over the
+row. Full screen ends first, or its Space would stay behind, black and
+empty. Every window of the app goes and the shim turns into an accessory app,
+so its Dock icon and menu bar go too, while the app runs on in Android: its
+displays stay open (unseen, so Android draws nothing for them and neither
+stops nor pauses) and say they are in the background
+(`setDisplayInBackground`), so the menu bar and the Library say In the
+Background, not Minimized. Opening the app again (the Library, the menu bar item, a
+notification, a tile kept in the Dock; `applicationShouldHandleReopen`,
+`applicationDidBecomeActive`) brings the windows back as they were. The red
+light still quits the app, and Android force-stops it. Back (Android's) comes
+after the blue light, then the app's name (`TitlebarTitle`): AppKit's own
+title is hidden, because it stays centred between the title bar's sides and
+was cut to "F…" while there was room by Back. The name takes the title's
+font and colour (which dims by itself in a window in the back), and what
+Android calls the screen it shows follows when it says more than the name.
+
+On the other side the title bar has menus of the menu bar's actions: the game
 controller's (Game Mode, key mapping, hints, scrolling), Translate Screen's,
-and the Device menu for the phone itself: Shake (⌃⌘Z, also in Controls: the
+and the Device menu for the phone itself: Shake (⌃⌘Z, also in Game Controls: the
 engine's `shake` swings Android's accelerometer for a second; the window
 gives a little shake too, unless Reduce Motion is on), Rotate, Location…,
-Fingerprint, the screenshot and recording items, and Keep on Top. The
+Fingerprint, the screenshot and recording items, Keep on Top, Picture in
+Picture (not while the key mapping editor is open) and Phone Style. The
 fingerprint also has a button of its own at the front, shown only while
-this app, the lock screen or Settings asks for a finger.
+this app, the lock screen or Settings asks for a finger; the trailing side
+keeps room for it. A recording's red dot and time come first. The trailing
+side is as wide as its buttons, and the leading side, with the name, takes
+the rest (`fitTitlebar`, again on every resize).
+
+That is the Standard app bar style (`AppBarStyle`). Settings › Graphics ›
+App windows › App bar style (`VMConfig.appBarStyle`, applied at once) sets
+it for every app, and an app may have its own (`WindowModeSettings.appBarStyle`
+in its App Shim's defaults), as a location may be every app's or one app's.
+It is one click away, never in a submenu: Phone Style, checked, in the
+Device menu and the View menu, and an App bar style card in Quick Settings.
+An app's own style is kept only while it differs from the Control Panel's,
+so choosing the Control Panel's one follows the Control Panel again. The
+other style:
+
+- **Phone** (from TheGemDev's pull request #6, `WindowChrome.swift`): the
+  window shows the app's screen alone with a phone's rounded corners, and
+  the Standard title bar grows out above it as the pointer leaves the
+  screen through its top, as in iPhone Mirroring; moving back into the app
+  or away shrinks it after half a second, and it stays while Quick Settings
+  or one of its menus is open. The window keeps its size throughout, so the
+  frame never re-plugs Android's display: every size comes from the screen
+  in the window (`screenSize`, the chrome's `screenInsets`), and a locked
+  shape is kept by `windowWillResize`, AppKit's aspect lock being the
+  frame's. Full screen and Picture in Picture have their own looks, and the
+  recording badge shows over the game while the title bar is away.
+
+All Settings for the app (at the bottom of Quick Settings) opens its page
+in the Library through `avo-control-panel://app/<package>`.
 
 The title bar's last button opens Quick Settings (`QuickSettings.swift`), a
 transient popover in the Library's haze look with only the settings whose
@@ -320,7 +386,7 @@ phone's one app has (games pause their sound without it).
 
 Many Android views ignore `ACTION_SCROLL` (ViewPager, many Compose, Flutter,
 React Native and custom views, games), while touch drags alone would lose the
-wheel's precision where views support it. Controls › Scrolling (also in the
+wheel's precision where views support it. Game Controls › Scrolling (also in the
 title bar's game controller menu) picks the scroll mode for the app, and the
 default for every app: the app's choice is kept in its App Shim's defaults
 (`AvoScrollMode`), the default in the Window Host's defaults
@@ -382,19 +448,19 @@ An app is a game when the user chose so or it has a usable key mapping
 (`KeymapProfile.usable`). The shared math is in AvoKit's `DisplaySizing`,
 so the window, touches and the renderer always agree.
 
-Android's screen (`GraphicsSettings.mode`) is sized one of three ways:
+Android's screen (`GraphicsSettings.mode`, Screen size: Window, Fixed or Phone) is sized one of three ways:
 
-- **Follow window** (`followWindow`, the Apps default): Android's size is
+- **Window** (`followWindow`, the Apps default): Android's size is
   the window's pixels × the render scale (50–100 %), widths a multiple of 8.
   Below 100 % MetalFX enlarges the picture back to the window. Its own
   aspect ratio (`followAspectRatio`) is Match window (the window resizes
   freely) or a ratio that locks the window's shape; in full screen Android
   then renders the largest part of the screen in that shape, with bars.
-- **Fixed resolution** (`fixed`, the Games default, 720p 16:9): a short side
+- **Fixed** (`fixed`, the Games default, 720p 16:9): a short side
   of 360–2160 px (presets 540p to 4K) and an aspect ratio (`aspectRatio`).
   With a ratio the window is locked to that shape; with Match window the
   ratio comes from the window.
-- **Phone's screen** (`deviceProfile`): the screen of the device profile
+- **Phone** (`deviceProfile`): the screen of the device profile
   chosen under Privacy & Security (`DeviceProfile.display`), its width ×
   height at its dpi, so apps lay out as on that phone; widths that are not a
   multiple of 8 lose the rest (1220 → 1216). The window is locked to the
@@ -472,7 +538,7 @@ black bars). The renderer (`MetalRenderer`) then picks a path with
   only for a drawable size that held for 150 ms (one pre-warmed on entering
   full screen, or still cached, is used at once); the current one and one
   previous are kept, and hiding the window or critical memory pressure
-  frees them. Bilinear and Nearest are the other filters.
+  frees them. Bilinear (Smooth) and Nearest (Pixel art) are the other upscaling choices.
 - **Shrinking:** an averaging filter of 2–4 × 2–4 samples per pixel.
 - **Sharpening:** optional AMD FidelityFX RCAS (MIT) on 1:1 pictures (after
   1:1, bilinear or MetalFX at the full size), off while resizing.
@@ -560,12 +626,22 @@ further the cursor is from the hero. Their targets are read once per display
 frame and glide like the D-pad. They follow the free cursor, so with the
 mouse locked in FPS mode they rest.
 
-The editor (KeymapEditorView.swift) is drawn over the game, and its panel
-(KeymapEditorPanel.swift, in the Quick Settings' haze) takes the right of
-the window: the game's picture moves over and gets smaller while the editor
-is open, Android's display staying the same (the window keeps its size, so
-nothing re-plugs). The panel has a Controls tab and a Controller tab, and on
-top what to do now:
+The editor (KeymapEditorView.swift) is drawn over the game. Its panel
+(KeymapEditorPanel.swift, in the Quick Settings' haze) stands beside the
+window, in a window of its own (`KeymapSidePanel` in KeymapOverlay.swift, a
+child window with rounded corners), so the game keeps its whole size while
+controls are placed on it. It goes on the right when the screen has room
+there, else on the left, else the window moves over a little as the editor
+opens (and back as it closes, unless it was moved meanwhile), and it changes
+sides when the window is moved until it leaves the screen. It takes the
+keyboard only for a mode's name (`becomesKeyOnlyIfNeeded`), so keys stay
+with the editor; drags from it to the game go by way of the screen. In full
+screen, or on a screen too narrow even then, it takes the right of the
+window instead and the game's picture moves over and gets smaller,
+Android's display staying the same (the window keeps its size, so nothing
+re-plugs). Cancel (and ⇧⌘K again) asks before throwing changes away.
+Picture in Picture waits until the editor closes. The panel has a Controls
+tab and a Controller tab, and on top what to do now:
 
 - **Mapping a button:** click the game's own button, then press its key (or
   a controller button; right-click for a mouse button or the wheel). A tap
@@ -901,8 +977,15 @@ key mapping editor's panel, mode and context menus, and the menu bar item's
 menu. AppKit code still builds an `NSMenu`: `HazeMenuPresenter.popUp(_:…)`
 has its delegate and validation update it as macOS would before showing
 it, and an item sends its action to its target (one without is found when
-the menu opens). A submenu opens in place, under its item (→ and ← with the
-keyboard); a menu taller than its screen scrolls. While a menu shows it has
+the menu opens). Every action item of a menu's top level has an
+illustration (an SF Symbol: `NSMenuItem.symbol(_:)`, or the entry's
+`symbol`); a submenu's rows show none, only real pictures such as apps'
+icons, and keep the column so their titles stay in line. A submenu opens in
+place, under its item (→ and ← with the keyboard): the panel takes its new
+size at once, so the rows spring open inside the menu (slid out from under
+their item), and a menu that must move to stay on its screen glides there;
+closing, it shrinks once the rows have gone. A menu taller than its screen
+scrolls. While a menu shows it has
 the keyboard, and the window that had it gets it back; a transient popover
 it opens from (Quick Settings) stays open meanwhile. Only the menu bar's
 menus and a text field's own context menu are still macOS's.
@@ -1159,7 +1242,7 @@ the Control Panel every app's with the list. Places, every app's and the
 apps' own, are kept across starts in `location.json` next to the
 configuration; a route is not (the place before it is kept).
 
-**The Location panel** (an app window's Controls › Location…, ⌥⌘L, or Quick
+**The Location panel** (an app window's Game Controls › Location…, ⌥⌘L, or Quick
 Settings › Location; `LocationPanel.swift`) is one window per App Shim:
 a MapKit map with Android's puck (an arrow while it moves, turned with the
 map), the Mac, the route and the stops being drawn; a search field (Apple

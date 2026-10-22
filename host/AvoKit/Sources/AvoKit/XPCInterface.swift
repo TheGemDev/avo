@@ -203,6 +203,9 @@ import IOSurface
     func resizeDisplay(_ displayID: UInt32, width: UInt32, height: UInt32, dpi: UInt32, reply: @escaping @Sendable (NSError?) -> Void)
     func closeDisplay(_ displayID: UInt32)
     func setDisplayVisible(_ displayID: UInt32, visible: Bool)
+    /// The app runs in the background (its window's blue light): out of
+    /// sight on purpose, not minimized (AppActivity.background).
+    func setDisplayInBackground(_ displayID: UInt32, inBackground: Bool)
     /// The display's window became the Mac's key window: its app takes
     /// Android's input focus (games pause their sound without it).
     func focusDisplay(_ displayID: UInt32)

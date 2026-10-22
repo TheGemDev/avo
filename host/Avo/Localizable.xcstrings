@@ -815,6 +815,16 @@
         }
       }
     },
+    "A Mac window: Back, game controls, Translate Screen, Device and Quick Settings always show in its title bar." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela Mac: Kembali, kontrol game, Terjemahkan Layar, Perangkat, dan Pengaturan Cepat selalu tampil di title bar-nya."
+          }
+        }
+      }
+    },
     "A MindTheGapps .zip, or the folder it unzips to, that you downloaded yourself" : {
       "localizations" : {
         "id" : {
@@ -1499,12 +1509,12 @@
         }
       }
     },
-    "Android has Bluetooth: its apps scan, connect and pair as on a phone. It needs the Android Emulator (Android Studio’s SDK Manager installs it)." : {
+    "Android has Bluetooth: its apps can turn it on, scan and connect, as on a phone. The devices it finds are the ones this Mac shares, below." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Android punya Bluetooth: app-nya memindai, menyambung, dan memasangkan seperti di ponsel. Ini memerlukan Android Emulator (dipasang lewat SDK Manager di Android Studio)."
+            "value" : "Android punya Bluetooth: aplikasinya bisa menyalakannya, memindai, dan menyambung seperti di ponsel. Perangkat yang ditemukannya adalah yang dibagikan Mac ini, di bawah."
           }
         }
       }
@@ -2147,16 +2157,6 @@
         }
       }
     },
-    "Android’s Bluetooth needs the Android Emulator (Android Studio’s SDK Manager installs it); without it, Bluetooth stays off in Android." : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bluetooth Android membutuhkan Android Emulator (dipasang lewat SDK Manager di Android Studio); tanpanya, Bluetooth di Android tetap mati."
-          }
-        }
-      }
-    },
     "Android’s Settings is adding a fingerprint: touch with the finger to add." : {
       "localizations" : {
         "id" : {
@@ -2193,16 +2193,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Data Android sudah ada di sana."
-          }
-        }
-      }
-    },
-    "Android’s screen" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Layar Android"
           }
         }
       }
@@ -2247,6 +2237,16 @@
         }
       }
     },
+    "App bar style" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gaya app bar"
+          }
+        }
+      }
+    },
     "App shortcuts" : {
       "localizations" : {
         "id" : {
@@ -2267,12 +2267,12 @@
         }
       }
     },
-    "Apple's upscaler keeps edges and text sharp when the picture is enlarged. Best for most games." : {
+    "Apple's MetalFX keeps edges and text sharp when the picture is enlarged. Best for most games." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Upscaler buatan Apple yang menjaga tepi dan teks tetap tajam saat gambar diperbesar. Paling cocok untuk kebanyakan game."
+            "value" : "MetalFX buatan Apple menjaga tepi dan teks tetap tajam saat gambar diperbesar. Paling cocok untuk kebanyakan game."
           }
         }
       }
@@ -2481,6 +2481,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikasi juga menulis ke log ini. Avo menghapus alamat email, nama akun, dan token darinya."
+          }
+        }
+      }
+    },
+    "Ask before quitting a game" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanya sebelum keluar dari game"
           }
         }
       }
@@ -2997,52 +3007,12 @@
         }
       }
     },
-    "Based on" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Berdasarkan"
-          }
-        }
-      }
-    },
     "Before signing in" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sebelum masuk ke akun Google"
-          }
-        }
-      }
-    },
-    "Bilinear" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bilinear"
-          }
-        }
-      }
-    },
-    "Bilinear (smooth)" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bilinear (halus)"
-          }
-        }
-      }
-    },
-    "Bilinear ×%@" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bilinear ×%@"
           }
         }
       }
@@ -3854,16 +3824,6 @@
         }
       }
     },
-    "Controls" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrol"
-          }
-        }
-      }
-    },
     "Copied" : {
       "localizations" : {
         "id" : {
@@ -4462,6 +4422,16 @@
         }
       }
     },
+    "Edit preset" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit preset"
+          }
+        }
+      }
+    },
     "Emulate this phone’s hardware" : {
       "localizations" : {
         "id" : {
@@ -4530,6 +4500,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hapus dan Pakai %lld GB"
+          }
+        }
+      }
+    },
+    "Every app scrolls this way unless it has its own choice: Scrolling in its window’s Quick Settings or Game Controls menu." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semua aplikasi menggulir dengan cara ini, kecuali yang punya pilihan sendiri: Gulir di Pengaturan Cepat jendelanya atau di menu Kontrol Game."
           }
         }
       }
@@ -4654,6 +4634,16 @@
         }
       }
     },
+    "Fixed" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetap"
+          }
+        }
+      }
+    },
     "Fixed at %@" : {
       "localizations" : {
         "id" : {
@@ -4664,42 +4654,12 @@
         }
       }
     },
-    "Fixed resolution" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resolusi tetap"
-          }
-        }
-      }
-    },
     "Folder" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Folder"
-          }
-        }
-      }
-    },
-    "Follow window" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ikuti jendela"
-          }
-        }
-      }
-    },
-    "Follows the window (%lld%% render scale)" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mengikuti jendela (skala render %lld%%)"
           }
         }
       }
@@ -4925,16 +4885,6 @@
         }
       }
     },
-    "GPU rendering needs the Android Emulator 37 or later; this Mac has %@. Update it with Android Studio’s SDK Manager." : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rendering GPU memerlukan Android Emulator 37 atau yang lebih baru; Mac ini punya versi %@. Perbarui melalui SDK Manager di Android Studio."
-          }
-        }
-      }
-    },
     "GPU rendering, 120 FPS, at least 8 GB of memory, and games at 720p 16:9 with MetalFX upscaling. For games like Genshin Impact, PUBG Mobile and Delta Force." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5002,6 +4952,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Halaman Game"
+          }
+        }
+      }
+    },
+    "Game controls" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrol game"
           }
         }
       }
@@ -5420,6 +5380,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Headset dan perangkat Bluetooth klasik lainnya, juga pairing, belum didukung."
+          }
+        }
+      }
+    },
+    "Heavy game" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game berat"
           }
         }
       }
@@ -6351,16 +6321,6 @@
         }
       }
     },
-    "MetalFX Spatial" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MetalFX Spatial"
-          }
-        }
-      }
-    },
     "MetalFX only enlarges. When Android's picture is larger than the window, Avo shrinks it smoothly instead." : {
       "localizations" : {
         "id" : {
@@ -6381,12 +6341,12 @@
         }
       }
     },
-    "MetalFX ×%@ + Bilinear" : {
+    "MetalFX ×%@ + Smooth" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MetalFX ×%@ + Bilinear"
+            "value" : "MetalFX ×%@ + Halus"
           }
         }
       }
@@ -6481,6 +6441,26 @@
         }
       }
     },
+    "Mouse" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mouse"
+          }
+        }
+      }
+    },
+    "Mouse and trackpad" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mouse dan trackpad"
+          }
+        }
+      }
+    },
     "Move" : {
       "localizations" : {
         "id" : {
@@ -6567,46 +6547,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perangkat di sekitar"
-          }
-        }
-      }
-    },
-    "Nearest" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nearest"
-          }
-        }
-      }
-    },
-    "Nearest neighbor (pixel art)" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nearest neighbor (pixel art)"
-          }
-        }
-      }
-    },
-    "Nearest neighbor looks uneven at %@×; it is cleanest at 2× or 3×." : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nearest neighbor terlihat tidak rata di %@×; paling rapi di 2× atau 3×."
-          }
-        }
-      }
-    },
-    "Nearest ×%@" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nearest ×%@"
           }
         }
       }
@@ -7282,12 +7222,22 @@
         }
       }
     },
-    "Open windows adjust right away. Some apps reload their screen for a moment. Filter and sharpness change instantly." : {
+    "Open windows adjust right away. Some apps reload their screen for a moment. Upscaling and sharpness change instantly." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jendela yang sedang terbuka langsung menyesuaikan. Beberapa aplikasi akan memuat ulang layarnya sebentar. Filter dan ketajaman berubah seketika."
+            "value" : "Jendela yang sedang terbuka langsung menyesuaikan. Beberapa aplikasi akan memuat ulang layarnya sebentar. Upscaling dan ketajaman berubah seketika."
+          }
+        }
+      }
+    },
+    "Open windows change right away. An app can have its own: Phone Style in its window’s Device menu, or App bar style in its Quick Settings." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela yang terbuka langsung berubah. Satu aplikasi bisa punya gaya sendiri: Gaya Ponsel di menu Perangkat jendelanya, atau Gaya app bar di Pengaturan Cepat-nya."
           }
         }
       }
@@ -7342,22 +7292,22 @@
         }
       }
     },
+    "Opens the app with the key mapping editor over the game. In its window, ⇧⌘K opens it too." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membuka aplikasinya dengan editor pemetaan tombol di atas game. Di jendelanya, ⇧⌘K juga membukanya."
+          }
+        }
+      }
+    },
     "Opens the app. Press and hold for its page." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Membuka aplikasi. Tekan dan tahan untuk halamannya."
-          }
-        }
-      }
-    },
-    "Opens the app; edit the key mapping over it with ⌘K" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Membuka aplikasinya; edit pemetaan tombol di atasnya dengan ⌘K"
           }
         }
       }
@@ -7502,6 +7452,26 @@
         }
       }
     },
+    "Phone" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponsel"
+          }
+        }
+      }
+    },
+    "Phone (%@)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponsel (%@)"
+          }
+        }
+      }
+    },
     "Phone status" : {
       "localizations" : {
         "id" : {
@@ -7512,32 +7482,12 @@
         }
       }
     },
-    "Phone’s screen" : {
+    "Phone style" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Layar ponsel"
-          }
-        }
-      }
-    },
-    "Phone’s screen (%@)" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Layar ponsel (%@)"
-          }
-        }
-      }
-    },
-    "Phone’s screen needs a phone: choose one in Settings › Privacy & Security › Device profile." : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Layar ponsel memerlukan profil ponsel: pilih satu di Pengaturan › Privasi & Keamanan › Profil perangkat."
+            "value" : "Gaya ponsel"
           }
         }
       }
@@ -7568,6 +7518,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktivitas fisik"
+          }
+        }
+      }
+    },
+    "Pixel art" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel art"
+          }
+        }
+      }
+    },
+    "Pixel art looks uneven at %@×; it is cleanest at 2× or 3×." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel art terlihat tidak rata di %@×; paling rapi di 2× atau 3×."
+          }
+        }
+      }
+    },
+    "Pixel art ×%@" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel art ×%@"
           }
         }
       }
@@ -7769,6 +7749,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disarankan"
+          }
+        }
+      }
+    },
+    "Record Android’s sound" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rekam suara Android"
           }
         }
       }
@@ -8314,22 +8304,52 @@
         }
       }
     },
-    "Scaling filter" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Filter penskalaan"
-          }
-        }
-      }
-    },
     "Screen" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Layar"
+          }
+        }
+      }
+    },
+    "Screen recording" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rekaman layar"
+          }
+        }
+      }
+    },
+    "Screen recordings made in app windows (⇧⌘R) include what Android plays. Off, they have no sound. File › Record Android’s Sound in an app window changes it too." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rekaman layar di jendela aplikasi (⇧⌘R) ikut merekam suara dari Android. Kalau dimatikan, rekamannya tanpa suara. File › Rekam Suara Android di jendela aplikasi juga mengubahnya."
+          }
+        }
+      }
+    },
+    "Screen size" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukuran layar"
+          }
+        }
+      }
+    },
+    "Scrolling" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gulir"
           }
         }
       }
@@ -8565,6 +8585,26 @@
         }
       }
     },
+    "Sharp" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tajam"
+          }
+        }
+      }
+    },
+    "Sharp (MetalFX)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tajam (MetalFX)"
+          }
+        }
+      }
+    },
     "Sharp upscaling" : {
       "localizations" : {
         "id" : {
@@ -8655,12 +8695,12 @@
         }
       }
     },
-    "Show key hints" : {
+    "Show keys on game" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tampilkan petunjuk tombol"
+            "value" : "Tampilkan tombol di game"
           }
         }
       }
@@ -8725,12 +8765,32 @@
         }
       }
     },
+    "Smooth" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halus"
+          }
+        }
+      }
+    },
     "Smooth edges" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Haluskan tepi"
+          }
+        }
+      }
+    },
+    "Smooth ×%@" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halus ×%@"
           }
         }
       }
@@ -8821,6 +8881,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kecepatan"
+          }
+        }
+      }
+    },
+    "Standard" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standar"
           }
         }
       }
@@ -9224,6 +9294,16 @@
         }
       }
     },
+    "System Language (%@)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bahasa Sistem (%@)"
+          }
+        }
+      }
+    },
     "System Status" : {
       "localizations" : {
         "id" : {
@@ -9300,6 +9380,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukuran aplikasinya sendiri di disk data Android. Data dan cache-nya belum termasuk."
+          }
+        }
+      }
+    },
+    "The app’s screen alone, with a phone’s rounded corners. Its title bar shows when the pointer leaves the screen at the top." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hanya layar aplikasi, dengan sudut membulat seperti ponsel. Title bar-nya muncul saat kursor keluar dari layar lewat atas."
           }
         }
       }
@@ -9385,12 +9475,22 @@
         }
       }
     },
-    "The key mapping is edited over the game: in its window, choose Game Controls › Edit Key Mapping or press ⌘K." : {
+    "The key mapping is edited over the game: Create Key Mapping… (or Edit) below opens the app with the editor. In its window, choose Game Controls › Edit Key Mapping or press ⇧⌘K." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pemetaan tombol diedit di atas game-nya: di jendela game, pilih Kontrol Game › Edit Pemetaan Tombol atau tekan ⌘K."
+            "value" : "Pemetaan tombol diedit di atas game-nya: Buat Pemetaan Tombol… (atau Edit) di bawah membuka aplikasinya bersama editornya. Di jendelanya, pilih Kontrol Game › Edit Pemetaan Tombol atau tekan ⇧⌘K."
+          }
+        }
+      }
+    },
+    "The language Translate Screen shows the text in, in every app. View › Translate Into and Quick Settings in an app window change it too." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bahasa yang dipakai Terjemahkan Layar untuk menampilkan teks, di semua aplikasi. Tampilan › Terjemahkan ke dan Pengaturan Cepat di jendela aplikasi juga mengubahnya."
           }
         }
       }
@@ -9454,6 +9554,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paketnya harus sesuai dengan Android Anda: MindTheGapps %1$@.0.0 untuk arm64, untuk Android %2$@."
+          }
+        }
+      }
+    },
+    "The red button and Picture in Picture’s ✕ end the game in Android. Avo asks first, so one wrong click doesn’t end a match, and offers Run in Background instead." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tombol merah dan ✕ di Gambar dalam Gambar menutup game di Android. Avo bertanya dulu supaya satu salah klik tidak mengakhiri pertandingan, dan menawarkan Jalan di Latar Belakang sebagai gantinya."
           }
         }
       }
@@ -9678,6 +9788,16 @@
         }
       }
     },
+    "This copy of Avo has an old GPU renderer (%@), so Android renders in software. Install the latest Avo to use the GPU." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salinan Avo ini punya renderer GPU lama (%@), jadi Android merender lewat software. Pasang Avo terbaru untuk memakai GPU."
+          }
+        }
+      }
+    },
     "This copy of Avo is missing its GPU renderer, so Android renders in software. Install Avo again to use the GPU." : {
       "localizations" : {
         "id" : {
@@ -9788,12 +9908,22 @@
         }
       }
     },
-    "To give one app a location of its own, choose Controls › Location… in its window (⌥⌘L), then This App. Android reports it while that app’s window is in front." : {
+    "To give one app a location of its own, choose Game Controls › Location… in its window (⌥⌘L), then This App. Android reports it while that app’s window is in front." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Agar satu app punya lokasi sendiri, pilih Kontrol › Lokasi… di jendelanya (⌥⌘L), lalu App Ini. Android melaporkannya selama jendela app itu di depan."
+            "value" : "Agar satu app punya lokasi sendiri, pilih Kontrol Game › Lokasi… di jendelanya (⌥⌘L), lalu App Ini. Android melaporkannya selama jendela app itu di depan."
+          }
+        }
+      }
+    },
+    "To use Phone, choose a phone in Settings › Privacy & Security › Device profile." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk memakai Ponsel, pilih ponselnya di Pengaturan › Privasi & Keamanan › Profil perangkat."
           }
         }
       }
@@ -9868,6 +9998,16 @@
         }
       }
     },
+    "Trackpad" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trackpad"
+          }
+        }
+      }
+    },
     "Translate Screen" : {
       "localizations" : {
         "id" : {
@@ -9878,12 +10018,22 @@
         }
       }
     },
-    "Translate Screen (⌘⇧T in an app window) reads the text on screen and translates it on this Mac. One engine does it for every app." : {
+    "Translate Screen (⇧⌘T in an app window) reads the text on screen and translates it on this Mac. One engine does it for every app." : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Terjemahkan Layar (⌘⇧T di jendela app) membaca teks di layar dan menerjemahkannya di Mac ini. Satu mesin melayani semua app."
+            "value" : "Terjemahkan Layar (⇧⌘T di jendela app) membaca teks di layar dan menerjemahkannya di Mac ini. Satu mesin melayani semua app."
+          }
+        }
+      }
+    },
+    "Translate into" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terjemahkan ke"
           }
         }
       }
@@ -10158,6 +10308,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Naik ke versi yang lebih baru tetap menyimpan aplikasi dan data Anda. Kembali ke Android yang lebih lama tidak bisa dengan data yang sama: Avo menghapus aplikasi dan data Android terlebih dahulu."
+          }
+        }
+      }
+    },
+    "Upscaling" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upscaling"
           }
         }
       }
@@ -10574,6 +10734,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Jendela %@"
+          }
+        }
+      }
+    },
+    "Window (%lld%% render scale)" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela (skala render %lld%%)"
           }
         }
       }

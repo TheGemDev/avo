@@ -142,6 +142,7 @@ final class ControlPanelModel {
     // MARK: Connection
 
     func start() {
+        refreshKeyMappingsWhenActive()
         // Development: run the daemon with launchctl instead (see host/README.md).
         if ProcessInfo.processInfo.arguments.contains("-AvoSkipDaemonRegistration") {
             connect()
@@ -656,6 +657,18 @@ final class ControlPanelModel {
     }
 
     @ObservationIgnored private var keyMappingGeneration = 0
+    @ObservationIgnored private var activationObserver: (any NSObjectProtocol)?
+
+    /// A key mapping made (or removed) in an app's window counts once Avo
+    /// is in front again: the Library's Games and Apps, and the preset an
+    /// app's page starts its graphics from, as the window has them.
+    private func refreshKeyMappingsWhenActive() {
+        guard activationObserver == nil else { return }
+        activationObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil,
+                                                                    queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshKeyMappings() }
+        }
+    }
 
     /// The settings `package`'s windows use now.
     func graphics(for package: String) -> ResolvedGraphics? {
@@ -670,6 +683,28 @@ final class ControlPanelModel {
             return
         }
         NSWorkspace.shared.openApplication(at: URL(filePath: shim), configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    /// Opens the app with its key mapping editor over the game (its page's
+    /// Create Key Mapping…): a running app is asked, one that starts is
+    /// told by its launch (ShimRequest).
+    func editKeyMapping(_ app: AppRecord) {
+        guard let shim = app.shortcuts.shimPath else {
+            lastError = String(localized: "\(app.displayName) has no shortcut yet. Use “Recreate Shortcuts” in Settings › General.")
+            return
+        }
+        let identifier = AvoIdentifiers.shimBundleIdentifier(for: app.package)
+        if let running = NSRunningApplication.runningApplications(withBundleIdentifier: identifier).first(where: \.isFinishedLaunching) {
+            // Asked and brought forward, not reopened: a reopen opens another
+            // window when none shows (a minimized one), as a Dock click does.
+            DistributedNotificationCenter.default().postNotificationName(ShimRequest.editKeyMapping, object: app.package, userInfo: nil,
+                                                                         deliverImmediately: true)
+            _ = running.activate(from: .current)
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.arguments = [ShimRequest.editKeyMappingArgument]
+        NSWorkspace.shared.openApplication(at: URL(filePath: shim), configuration: configuration)
     }
 
     // MARK: Notifications

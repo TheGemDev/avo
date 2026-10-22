@@ -463,6 +463,10 @@ public final class DaemonClient: @unchecked Sendable {
         proxy()?.setDisplayVisible(displayID, visible: visible)
     }
 
+    public func setDisplayInBackground(_ displayID: UInt32, inBackground: Bool) {
+        proxy()?.setDisplayInBackground(displayID, inBackground: inBackground)
+    }
+
     public func focusDisplay(_ displayID: UInt32) {
         proxy()?.focusDisplay(displayID)
     }
